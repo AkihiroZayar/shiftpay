@@ -1,6 +1,14 @@
-# ShiftPay — Work Income Tracker
+<h1 align="center">ShiftPay — Work Income Tracker</h1>
 
-A modern, calendar-based income tracker for part-time workers in Japan. Track shifts across multiple jobs, automatically apply weekend/holiday pay rates, and visualise your monthly earnings — all stored locally in your browser.
+<p align="center">
+  A modern, calendar-based income tracker for part-time workers in Japan. Track shifts across multiple jobs, automatically apply weekend/holiday pay rates, and visualise your monthly earnings — all stored locally in your browser.<br>By AkihiroLabs.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/version-1.1.0-1E3A8A" alt="version 1.1.0">
+  <img src="https://img.shields.io/badge/vanilla-JavaScript-00A8CC" alt="Vanilla JS">
+  <img src="https://img.shields.io/badge/storage-localStorage-1E3A8A" alt="localStorage">
+</p>
 
 ---
 
@@ -22,22 +30,27 @@ A modern, calendar-based income tracker for part-time workers in Japan. Track sh
 ## Quick Start
 
 ```
-work-income-tracker/
+shiftpay/
 ├── index.html
 ├── css/
 │   └── main.css
-└── js/
-    ├── holidays.js      Japanese public holiday engine
-    ├── storage.js       LocalStorage CRUD layer
-    ├── income.js        Calculation engine (rates, tax, projections)
-    ├── calendar-view.js FullCalendar v6 integration
-    ├── charts-view.js   Chart.js chart renderers
-    ├── reports.js       Report view + PDF/Excel/CSV export
-    ├── modals.js        Modal dialogs + toast notifications
-    └── app.js           Application controller
+├── js/
+│   ├── version.js       App version (APP_VERSION)
+│   ├── holidays.js      Japanese public holiday engine
+│   ├── storage.js       LocalStorage CRUD layer
+│   ├── income.js        Calculation engine (rates, tax, projections)
+│   ├── calendar-view.js FullCalendar v6 integration
+│   ├── charts-view.js   Chart.js chart renderers
+│   ├── reports.js       Report view + PDF/Excel/CSV export
+│   ├── modals.js        Modal dialogs + toast notifications
+│   └── app.js           Application controller
+├── CHANGELOG.md
+└── README.md
 ```
 
 Open `index.html` in any modern browser — no build step required.
+
+Live: **https://akihirozayar.github.io/shiftpay/**
 
 For demo data, go to **Settings → Load Demo** to populate 90 days of sample shifts across three jobs.
 
@@ -106,3 +119,24 @@ No npm, no build toolchain — all dependencies load from CDN.
 ## Browser Support
 
 Works in any modern browser with ES6+ and `localStorage` support (Chrome, Firefox, Safari, Edge). Tested on desktop and mobile.
+
+---
+
+## 🔖 Versioning
+
+This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`).
+
+- The version lives in **`js/version.js`** (`APP_VERSION`) and is shown in **Settings → About**.
+- To release: bump the version, add an entry to [`CHANGELOG.md`](CHANGELOG.md), then create a GitHub Release tagged `vX.Y.Z`.
+
+Current version: **v1.1.0** — see the [changelog](CHANGELOG.md).
+
+## 💬 Community
+
+Updates and feedback on the **AkihiroLabs Discord server**.
+
+---
+
+<p align="center">
+  Built with 🦝 by <b>AkihiroLabs</b>
+</p>
