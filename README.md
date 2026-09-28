@@ -1,11 +1,11 @@
 <h1 align="center">ShiftPay — Work Income Tracker</h1>
 
 <p align="center">
-  A modern, calendar-based income tracker for part-time workers in Japan. Track shifts across multiple jobs, automatically apply weekend/holiday pay rates, and visualise your monthly earnings — all stored locally in your browser.<br>By AkihiroLabs.
+  A minimalist, calendar-based income tracker for part-time workers in Japan. Track shifts across multiple jobs, automatically apply weekend/holiday pay rates, and visualise your monthly earnings — all stored locally in your browser.<br>By AkihiroLabs.
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.1.0-1E3A8A" alt="version 1.1.0">
+  <img src="https://img.shields.io/badge/version-1.2.0-1E3A8A" alt="version 1.1.0">
   <img src="https://img.shields.io/badge/vanilla-JavaScript-00A8CC" alt="Vanilla JS">
   <img src="https://img.shields.io/badge/storage-localStorage-1E3A8A" alt="localStorage">
 </p>
@@ -17,12 +17,12 @@
 - **Multi-job management** — Create jobs with hourly wages, weekend & holiday multipliers, and colour labels
 - **Calendar shift entry** — Click any day to log a shift; edit or delete by clicking the event
 - **Automatic calculations** — Weekend and Japanese national holiday rates applied automatically
-- **Dashboard** — Today / Week / Month / Year / All-Time income at a glance
-- **Projection banner** — Estimates month-end earnings based on scheduled shifts
-- **Tax calculator** — Toggle 所得税, 住民税, 健康保険, 年金, and 雇用保険 on/off with custom rates
-- **Reports** — Filter by year, month, and job; export to PDF, Excel, or CSV
-- **Charts** — Monthly income, job distribution, hours worked, gross vs net
-- **Dark / Light mode** — Theme persists across sessions
+- **Home** — One big number for this Week / Month / Year, take-home pay, monthly goal and 年収の壁 (yearly limit) progress
+- **Repeating shifts** — Save a weekly pattern and fill a whole month in one tap
+- **Tax & fees** — Monthly amounts for 所得税, 住民税, 健康保険, 年金, 雇用保険, transport and custom fees
+- **Export** — Filter by year, month, and job; export to PDF, Excel, or CSV
+- **Details** — Income by job and an income chart, folded away until you need them
+- **Light / Dark mode** — AkihiroLabs light theme by default; dark mode in Settings
 - **100% local** — All data stored in `localStorage`; no server, no account required
 
 ---
@@ -52,53 +52,48 @@ Open `index.html` in any modern browser — no build step required.
 
 Live: **https://akihirozayar.github.io/shiftpay/**
 
-For demo data, go to **Settings → Load Demo** to populate 90 days of sample shifts across three jobs.
+For demo data, go to **Settings → Data → Load demo** to populate 90 days of sample shifts across three jobs.
 
 ---
 
 ## Adding Your First Job
 
-1. Click **Jobs** in the sidebar → **Add Job**
+1. Open **Jobs** → **+ Add job**
 2. Enter a job name, company (optional), and base hourly wage in ¥
-3. Set weekend and holiday multipliers (defaults: 1.25× and 1.5×)
+3. Optional: open **Weekend & holiday pay** to change the multipliers (defaults: 1.25× and 1.5×)
 4. Pick a colour to identify this job on the calendar
-5. Click **Save Job**
+5. Click **Save**
 
 ## Logging a Shift
 
 - **From the calendar:** Navigate to the right month and click any date
-- **From the topbar:** Click **+ Add Shift** (the blue button)
-- **Editing:** Click any event on the calendar, or any row in the Dashboard's recent list
+- **Anywhere:** Click **+ Add shift** (top right on desktop, the round **+** on phones)
+- **Saved pattern:** Pick one under **Use a saved shift** to fill job and times
+- **Editing:** Click any event on the calendar, or any row in Home's recent list
 
-The shift form shows a live income preview including tax deductions as you type.
+The shift form shows the estimated pay as you type. Overtime, late night, custom rate and notes are under **More options**.
 
 ## Tax Settings
 
-Go to **Tax** in the sidebar and flip the master **Enable** toggle. Each deduction line can be turned on or off individually and the rate customised. Changes take effect on all income previews immediately.
+Go to **Settings → Tax & fees** and turn on the switch. Turn on each line you pay and enter the monthly amount (check your 給与明細). Home then shows your take-home pay for the month.
 
-Default Japanese rates used as starting points:
+> Note: These are simple monthly estimates for budgeting. Actual deductions depend on income, employer, age, and prefecture.
 
-| Deduction | Default |
-|---|---|
-| 所得税 Income Tax | 10.21% |
-| 住民税 Resident Tax | 10.0% |
-| 健康保険 Health Insurance | 4.99% |
-| 年金 Pension | 9.15% |
-| 雇用保険 Employment Insurance | 0.6% |
+## Yearly Limit (年収の壁)
 
-> Note: These are simplified flat-rate estimates for budgeting purposes. Actual deductions depend on income brackets, employer type, age, and prefecture.
+Go to **Settings → Profile & goals** and set your yearly limit, or tap a preset (123万 / 130万 / 150万 / 160万). Home shows how much of it you have used this calendar year and warns you as you get close. The rules change often, so check the limit that applies to you.
 
 ## Exporting Reports
 
-1. Go to **Reports**
+1. Go to **Settings → Export report**
 2. Choose a year and optionally a specific month / job
-3. Click **Export** → PDF, Excel, or CSV
+3. Click **PDF**, **Excel**, or **CSV**
 
 PDF is landscape A4 with a summary header and full shift table. Excel includes a Summary sheet and a Shifts sheet. CSV is UTF-8 with BOM for direct Excel opening.
 
 ## Data Backup
 
-Go to **Settings → Export JSON** to download a full backup of all your data. Import it later (on the same or a different device) via **Import JSON**.
+Go to **Settings → Data → Export** to download a backup of your jobs, shifts and fees. Restore it later (on the same or a different device) with **Import**.
 
 ---
 
@@ -110,7 +105,7 @@ Go to **Settings → Export JSON** to download a full backup of all your data. I
 | Chart.js | 4.4.3 | Charts |
 | jsPDF + autotable | 2.5.1 / 3.8.2 | PDF export |
 | SheetJS (xlsx) | 0.18.5 | Excel export |
-| Google Fonts | — | Inter + JetBrains Mono |
+| Google Fonts | — | Inter |
 
 No npm, no build toolchain — all dependencies load from CDN.
 
@@ -129,7 +124,7 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 - The version lives in **`js/version.js`** (`APP_VERSION`) and is shown in **Settings → About**.
 - To release: bump the version, add an entry to [`CHANGELOG.md`](CHANGELOG.md), then create a GitHub Release tagged `vX.Y.Z`.
 
-Current version: **v1.1.0** — see the [changelog](CHANGELOG.md).
+Current version: **v1.2.0** — see the [changelog](CHANGELOG.md).
 
 ## 💬 Community
 
