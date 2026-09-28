@@ -110,12 +110,22 @@ const Modals = (() => {
       sel.appendChild(opt);
     });
 
+    /* "Use a saved shift" picker (repeating-shift templates) */
+    const tplField = document.getElementById('shiftTemplateField');
+    const tplSel   = document.getElementById('shiftTemplate');
+    const templates = Storage.getTemplates().filter(t => jobs.some(j => j.id === t.jobId));
+    if (tplField && tplSel) {
+      tplSel.innerHTML = '<option value="">—</option>' + templates.map(t =>
+        `<option value="${t.id}">${_esc(t.name)} · ${t.startTime}–${t.endTime}</option>`).join('');
+      tplField.hidden = !!shiftId || !templates.length;
+    }
+
     if (shiftId) {
       /* ─ Edit mode ─ */
       const shift = Storage.getShiftById(shiftId);
       if (!shift) return;
 
-      document.getElementById('shiftModalTitle').textContent = 'Edit Shift';
+      document.getElementById('shiftModalTitle').textContent = 'Edit shift';
       document.getElementById('shiftDate').value          = shift.date;
       document.getElementById('shiftJobId').value         = shift.jobId;
       document.getElementById('shiftStart').value         = shift.startTime;
@@ -126,10 +136,10 @@ const Modals = (() => {
       const ot = shift.overtimeType || '';
       document.getElementById('shiftIsOvertime').checked  = ot === 'overtime' || ot === 'overtime+latenight';
       document.getElementById('shiftIsLateNight').checked = ot === 'latenight' || ot === 'overtime+latenight';
-      document.getElementById('deleteShiftBtn').style.display = '';
+      document.getElementById('deleteShiftBtn').hidden = false;
     } else {
       /* ─ Add mode ─ */
-      document.getElementById('shiftModalTitle').textContent = 'Add Shift';
+      document.getElementById('shiftModalTitle').textContent = 'Add shift';
       document.getElementById('shiftDate').value          = dateStr || Income.todayKey();
       document.getElementById('shiftJobId').value         = jobs.length ? jobs[0].id : '';
       document.getElementById('shiftStart').value         = '09:00';
@@ -139,15 +149,13 @@ const Modals = (() => {
       document.getElementById('shiftNotes').value         = '';
       document.getElementById('shiftIsOvertime').checked  = false;
       document.getElementById('shiftIsLateNight').checked = false;
-      document.getElementById('deleteShiftBtn').style.display = 'none';
+      document.getElementById('deleteShiftBtn').hidden = true;
     }
 
     _updateShiftPreview();
     modal.classList.add('active');
     _openOverlay();
 
-    // Focus first field
-    setTimeout(() => document.getElementById('shiftDate')?.focus(), 80);
   }
 
   function _closeShiftModal() {
@@ -168,12 +176,12 @@ const Modals = (() => {
     if (!previewEl) return;
 
     if (!dateStr || !jobId || !start || !end) {
-      previewEl.style.display = 'none';
+      previewEl.hidden = true;
       return;
     }
 
     const job = Storage.getJobById(jobId);
-    if (!job) { previewEl.style.display = 'none'; return; }
+    if (!job) { previewEl.hidden = true; return; }
 
     const isOT = document.getElementById('shiftIsOvertime')?.checked;
     const isLN = document.getElementById('shiftIsLateNight')?.checked;
@@ -191,10 +199,10 @@ const Modals = (() => {
     const details = Income.calcShiftDetails(pseudoShift, job, tax);
 
     const dayLabels = {
-      weekday: '平日 Weekday',
-      weekend: '週末 Weekend',
-      holiday: '祝日 National Holiday',
-      custom:  'Custom Rate',
+      weekday: 'Weekday',
+      weekend: 'Weekend rate',
+      holiday: 'Holiday rate',
+      custom:  'Custom rate',
     };
 
     const multStr = details.multiplier && details.multiplier !== 1
@@ -214,14 +222,14 @@ const Modals = (() => {
       document.getElementById('prevTax').textContent = Income.formatCurrency(monthlyDed) + '/month';
       const taxLabelEl = taxRow?.querySelector('span');
       if (taxLabelEl) taxLabelEl.textContent = 'Monthly deductions';
-      if (taxRow) taxRow.style.display = '';
-      if (netRow) netRow.style.display = 'none'; // net depends on month total, not per shift
+      if (taxRow) taxRow.hidden = false;
+      if (netRow) netRow.hidden = true; // net depends on month total, not per shift
     } else {
-      if (taxRow) taxRow.style.display = 'none';
-      if (netRow) netRow.style.display = 'none';
+      if (taxRow) taxRow.hidden = true;
+      if (netRow) netRow.hidden = true;
     }
 
-    previewEl.style.display = '';
+    previewEl.hidden = false;
   }
 
   function _saveShift() {
@@ -267,7 +275,23 @@ const Modals = (() => {
     });
   }
 
+  function _esc(str) {
+    return String(str ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function _applyTemplateToForm() {
+    const id  = document.getElementById('shiftTemplate')?.value;
+    const tpl = Storage.getTemplates().find(t => t.id === id);
+    if (!tpl) return;
+    document.getElementById('shiftJobId').value = tpl.jobId;
+    document.getElementById('shiftStart').value = tpl.startTime;
+    document.getElementById('shiftEnd').value   = tpl.endTime;
+    document.getElementById('shiftBreak').value = tpl.breakMinutes;
+    _updateShiftPreview();
+  }
+
   function _bindShiftModal() {
+    document.getElementById('shiftTemplate')?.addEventListener('change', _applyTemplateToForm);
     document.getElementById('shiftModalClose')?.addEventListener('click', _closeShiftModal);
     document.getElementById('shiftCancelBtn')?.addEventListener('click', _closeShiftModal);
     document.getElementById('saveShiftBtn')?.addEventListener('click', _saveShift);
@@ -295,7 +319,7 @@ const Modals = (() => {
     if (jobId) {
       const job = Storage.getJobById(jobId);
       if (!job) return;
-      document.getElementById('jobModalTitle').textContent  = 'Edit Job';
+      document.getElementById('jobModalTitle').textContent  = 'Edit job';
       document.getElementById('jobName').value              = job.name;
       document.getElementById('jobCompany').value           = job.company || '';
       document.getElementById('jobWage').value              = job.baseWage;
@@ -308,13 +332,13 @@ const Modals = (() => {
       document.getElementById('jobHolidayFixed').value      = job.holidayFixedRate  || '';
       _setRateMode('weekend', job.weekendMode || 'multiplier');
       _setRateMode('holiday', job.holidayMode || 'multiplier');
-      document.getElementById('deleteJobBtn').style.display = '';
+      document.getElementById('deleteJobBtn').hidden = false;
     } else {
-      document.getElementById('jobModalTitle').textContent  = 'Add Job';
+      document.getElementById('jobModalTitle').textContent  = 'Add job';
       document.getElementById('jobName').value              = '';
       document.getElementById('jobCompany').value           = '';
       document.getElementById('jobWage').value              = '';
-      document.getElementById('jobColor').value             = '#3B82F6';
+      document.getElementById('jobColor').value             = '#1E3A8A';
       document.getElementById('jobWeekendEnabled').checked  = true;
       document.getElementById('jobWeekendMult').value       = '1.25';
       document.getElementById('jobWeekendFixed').value      = '';
@@ -323,7 +347,7 @@ const Modals = (() => {
       document.getElementById('jobHolidayFixed').value      = '';
       _setRateMode('weekend', 'multiplier');
       _setRateMode('holiday', 'multiplier');
-      document.getElementById('deleteJobBtn').style.display = 'none';
+      document.getElementById('deleteJobBtn').hidden = true;
     }
 
     _updateJobPreview();

@@ -91,6 +91,7 @@ const Storage = (() => {
       endTime: data.endTime,        // 'HH:MM'
       breakMinutes: Number(data.breakMinutes) || 0,
       overrideRate: data.overrideRate ? Number(data.overrideRate) : null,
+      overtimeType: data.overtimeType || null,
       notes: data.notes || '',
     };
     const shifts = getShifts();
@@ -203,7 +204,7 @@ const Storage = (() => {
   /* ══════════════════════════════════════════
      APP SETTINGS
   ══════════════════════════════════════════ */
-  const DEFAULT_SETTINGS = { theme: 'dark' };
+  const DEFAULT_SETTINGS = { theme: 'light' };
 
   function getSettings()    { return read(K.SETTINGS, DEFAULT_SETTINGS); }
   function saveSettings(s)  { write(K.SETTINGS, s); }
@@ -290,9 +291,9 @@ const Storage = (() => {
   /* ══════════════════════════════════════════
      GOALS
   ══════════════════════════════════════════ */
-  const DEFAULT_GOALS = { monthlyGross: 0 };
-  function getGoals()    { return read(K.GOALS, DEFAULT_GOALS); }
-  function saveGoals(g)  { write(K.GOALS, g); }
+  const DEFAULT_GOALS = { monthlyGross: 0, yearlyLimit: 0 };
+  function getGoals()    { return { ...DEFAULT_GOALS, ...read(K.GOALS, {}) }; }
+  function saveGoals(g)  { write(K.GOALS, { ...getGoals(), ...g }); }
 
   /* ══════════════════════════════════════════
      SHIFT TEMPLATES

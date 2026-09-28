@@ -518,6 +518,58 @@ const ChartsView = (() => {
     ctx.fillText('No data for this period', canvas.width / 2, canvas.height / 2);
   }
 
+  /* ─────────────────────────────────────────────
+     HOME: minimal single-series income bars
+  ───────────────────────────────────────────── */
+  function renderSimpleBar(canvasId, labels, data) {
+    _destroy(canvasId);
+    _applyGlobalDefaults();
+
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    const c      = _getThemeColors();
+    const accent = _css('--accent') || '#1E3A8A';
+
+    _charts[canvasId] = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          data,
+          backgroundColor: accent,
+          borderRadius: 4,
+          maxBarThickness: 28,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: c.surface,
+            titleColor: c.text,
+            bodyColor: c.text,
+            borderColor: c.gridLine,
+            borderWidth: 1,
+            displayColors: false,
+            callbacks: { label: ctx => Income.formatCurrency(ctx.raw) },
+          },
+        },
+        scales: {
+          x: { grid: { display: false }, border: { display: false }, ticks: { color: c.muted, maxRotation: 0, autoSkipPadding: 8 } },
+          y: {
+            grid: { color: c.gridLine },
+            border: { display: false },
+            ticks: { color: c.muted, maxTicksLimit: 4, callback: v => Income.formatCurrency(v) },
+            beginAtZero: true,
+          },
+        },
+      },
+    });
+  }
+
   /* ── Destroy all charts (e.g. before theme switch) ── */
   function destroyAll() {
     Object.keys(_charts).forEach(id => {
@@ -535,6 +587,7 @@ const ChartsView = (() => {
     renderReportHoursBar,
     renderGrossNetBar,
     renderTaxDonut,
+    renderSimpleBar,
     destroyAll,
   };
 
