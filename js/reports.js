@@ -274,7 +274,7 @@ const Reports = (() => {
       body: rows,
       startY: 54,
       styles:     { fontSize: 8, cellPadding: 3 },
-      headStyles: { fillColor: [59, 130, 246], textColor: 255, fontStyle: 'bold' },
+      headStyles: { fillColor: [30, 58, 138], textColor: 255, fontStyle: 'bold' },
       alternateRowStyles: { fillColor: [245, 247, 252] },
       columnStyles: {
         5: { halign: 'right' },
@@ -289,7 +289,7 @@ const Reports = (() => {
       doc.setPage(i);
       doc.setFontSize(8);
       doc.setTextColor(160);
-      doc.text(`ShiftPay · Page ${i} of ${pageCount}`, doc.internal.pageSize.getWidth() - 14, doc.internal.pageSize.getHeight() - 8, { align: 'right' });
+      doc.text(`ShiftPay by AkihiroLabs · Page ${i} of ${pageCount}`, doc.internal.pageSize.getWidth() - 14, doc.internal.pageSize.getHeight() - 8, { align: 'right' });
     }
 
     const filename = `shiftpay-${_year}${_month !== null ? `-${String(_month + 1).padStart(2,'0')}` : ''}.pdf`;

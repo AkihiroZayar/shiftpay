@@ -16,9 +16,24 @@ const CalendarView = (() => {
       initialView: 'dayGridMonth',
       headerToolbar: false,        // We use our own toolbar buttons
       firstDay: 0,                 // Sunday first (common in Japan UI)
+      dayMaxEvents: 2,
+      fixedWeekCount: false,
+      noEventsContent: 'No shifts this month',
       height: 'auto',
       selectable: true,
       eventDisplay: 'block',
+
+      /* ─ Compact event label: "¥8,400 Job" (desktop) / "¥8.4k" (phone) ─ */
+      eventContent(arg) {
+        const { gross, jobName } = arg.event.extendedProps;
+        if (gross == null) return true;
+        const el = document.createElement('span');
+        el.className = 'ev';
+        el.textContent = window.innerWidth < 600
+          ? '¥' + (gross >= 10000 ? Math.round(gross / 1000) + 'k' : gross >= 1000 ? (Math.round(gross / 100) / 10) + 'k' : Math.round(gross))
+          : `${Income.formatCurrency(gross)} ${jobName}`;
+        return { domNodes: [el] };
+      },
 
       /* ─ Date click: open Add Shift modal ─ */
       dateClick(info) {
@@ -97,7 +112,7 @@ const CalendarView = (() => {
       if (!job) return;
 
       const details = Income.calcShiftDetails(shift, job, taxSettings);
-      const title = `${job.name}  ${Income.formatCurrency(details.gross)}`;
+      const title = `${Income.formatCurrency(details.gross)} ${job.name}`;
 
       calendar.addEvent({
         id: shift.id,
@@ -107,7 +122,7 @@ const CalendarView = (() => {
         backgroundColor: job.color,
         borderColor: job.color,
         textColor: '#ffffff',
-        extendedProps: { shiftId: shift.id },
+        extendedProps: { shiftId: shift.id, gross: details.gross, jobName: job.name },
       });
     });
 
@@ -132,7 +147,7 @@ const CalendarView = (() => {
             const marker = document.createElement('div');
             marker.className = 'fc-holiday-name';
             marker.title = name;
-            marker.textContent = name.length > 8 ? name.slice(0, 8) + '…' : name;
+            marker.textContent = name.split(' (')[0];
             frame.appendChild(marker);
           }
         }
@@ -147,28 +162,12 @@ const CalendarView = (() => {
     if (!container || !calendar) return;
 
     const d = calendar.getDate();
-    const year = d.getFullYear();
-    const month = d.getMonth() + 1;
+    const shifts = Storage.getShiftsForMonth(d.getFullYear(), d.getMonth()); // month is 0-based
+    const agg    = Income.calcAggregate(shifts);
 
-    const shifts = Storage.getShiftsForMonth(year, month);
-    const jobs   = Storage.getJobs();
-    const tax    = Storage.getTaxSettings();
-
-    const agg = Income.calcAggregate(shifts, tax);
-
-    container.innerHTML = `
-      <span class="cal-stat-chip">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        ${agg.count} shift${agg.count !== 1 ? 's' : ''}
-      </span>
-      <span class="cal-stat-chip">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        ${Income.formatHours(agg.hours)}
-      </span>
-      <span class="cal-stat-chip accent">
-        ${Income.formatCurrency(agg.gross)}
-      </span>
-    `;
+    container.textContent = agg.count
+      ? `${agg.count} shift${agg.count !== 1 ? 's' : ''} · ${Income.formatHours(agg.hours)} · ${Income.formatCurrency(agg.gross)}`
+      : 'No shifts this month — tap a day to add one.';
   }
 
   /* ── Helpers ── */

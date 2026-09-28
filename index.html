@@ -1,756 +1,461 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>ShiftPay — Work Income Tracker</title>
   <meta name="author" content="AkihiroLabs">
+  <meta name="theme-color" content="#1E3A8A">
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
 
-<div class="app-wrapper">
-  <!-- ═══════════════════════════════════════════════════════════
-       SIDEBAR
-  ══════════════════════════════════════════════════════════════ -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-      <div class="brand-logo" id="brandLogo"><span>¥</span></div>
+<div class="app">
+
+  <!-- ═══════════ SIDEBAR (desktop) ═══════════ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">¥</div>
       <div class="brand-text">
         <span class="brand-name">ShiftPay</span>
-        <span class="brand-tagline">Income Tracker</span>
-        <span class="brand-dev">by Akihiro Labs</span>
+        <span class="brand-by">by Akihiro<b>Labs</b></span>
       </div>
     </div>
 
-    <nav class="sidebar-nav">
-      <a class="nav-link active" data-view="dashboard" href="#">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-        <span>Dashboard</span>
+    <nav class="side-nav">
+      <a class="nav-link active" data-view="home" href="#">
+        <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>
+        <span>Home</span>
       </a>
       <a class="nav-link" data-view="calendar" href="#">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M16 2.5v4M8 2.5v4M3 10h18"/></svg>
         <span>Calendar</span>
       </a>
       <a class="nav-link" data-view="jobs" href="#">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="17"/><line x1="9" y1="14.5" x2="15" y2="14.5"/></svg>
+        <svg viewBox="0 0 24 24"><rect x="2.5" y="7" width="19" height="13.5" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
         <span>Jobs</span>
       </a>
-      <a class="nav-link" data-view="templates" href="#">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-        <span>Templates</span>
-      </a>
-      <a class="nav-link" data-view="reports" href="#">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        <span>Reports</span>
-      </a>
-      <a class="nav-link" data-view="tax" href="#">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/><line x1="15" y1="17" x2="17" y2="15"/><line x1="15" y1="15" x2="17" y2="17"/></svg>
-        <span>Tax</span>
-      </a>
       <a class="nav-link" data-view="settings" href="#">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
         <span>Settings</span>
       </a>
     </nav>
 
-    <!-- Profile chip at bottom of sidebar -->
-    <div class="sidebar-profile-chip" id="sidebarProfileChip" role="button" tabindex="0"
-         onclick="App.navigateTo('profile')"
-         onkeydown="if(event.key==='Enter')App.navigateTo('profile')">
-      <div class="sp-avatar" id="sidebarAvatar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      </div>
-      <div class="sp-info">
-        <span class="sp-name" id="sidebarProfileName">My Profile</span>
-        <span class="sp-sub">Tap to edit →</span>
-      </div>
-    </div>
-
-    <div class="sidebar-footer">
-      <button class="theme-btn" id="themeToggle">
-        <svg id="iconSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        <svg id="iconMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        <span id="themeLabel">Light Mode</span>
-      </button>
-    </div>
+    <p class="side-foot">🦝 AkihiroLabs</p>
   </aside>
 
-  <!-- ═══════════════════════════════════════════════════════════
-       MAIN WRAPPER
-  ══════════════════════════════════════════════════════════════ -->
-  <div class="main-wrapper">
-    <!-- Top Bar -->
+  <!-- ═══════════ MAIN ═══════════ -->
+  <main class="main">
     <header class="topbar">
-      <button class="hamburger" id="hamburger" aria-label="Toggle sidebar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      <h1 class="page-title" id="pageTitle">Home</h1>
+      <button class="btn btn-primary topbar-add" id="addShiftBtn">
+        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        Add shift
       </button>
-      <h1 class="page-title" id="pageTitle">Dashboard</h1>
-      <div class="topbar-right">
-        <span class="current-date" id="currentDate"></span>
-        <button class="btn btn-primary" id="addShiftBtn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          <span>Add Shift</span>
-        </button>
-      </div>
     </header>
 
-    <!-- Content Area -->
-    <div class="content-area">
+    <!-- ─── HOME ─── -->
+    <section class="view active" id="view-home">
 
-      <!-- ─── DASHBOARD VIEW ─── -->
-      <section class="view active" id="view-dashboard">
-        <div class="stats-grid" id="statsGrid"></div>
+      <!-- Empty state (no jobs / no shifts yet) -->
+      <div class="empty" id="homeEmpty" hidden>
+        <div class="empty-mascot">🦝</div>
+        <h2 id="homeEmptyTitle">No shifts yet</h2>
+        <p id="homeEmptyText">Add your first shift and your earnings will show up here.</p>
+        <button class="btn btn-primary" id="homeEmptyBtn">Add your first shift</button>
+      </div>
 
-        <div class="projection-banner" id="projectionBanner"></div>
-        <div id="goalProgressBanner"></div>
-
-        <div class="dashboard-grid dashboard-grid-simple">
-          <div class="card">
-            <div class="card-header">
-              <h3 class="card-title">Recent Shifts</h3>
-              <button class="card-link" data-nav="calendar">View Calendar →</button>
-            </div>
-            <div id="recentShiftsList"></div>
-          </div>
-
-          <div class="card" id="monthSummaryCard">
-            <div class="card-header">
-              <h3 class="card-title">This Month at a Glance</h3>
-            </div>
-            <div id="monthSummaryContent" style="padding:16px 20px"></div>
-          </div>
+      <div id="homeMain">
+        <div class="segmented" role="tablist" aria-label="Period">
+          <button role="tab" data-period="week">Week</button>
+          <button role="tab" data-period="month" class="active">Month</button>
+          <button role="tab" data-period="year">Year</button>
         </div>
-      </section>
 
-      <!-- ─── CALENDAR VIEW ─── -->
-      <section class="view" id="view-calendar">
-        <div class="cal-toolbar">
-          <div class="cal-nav-group">
-            <button class="btn btn-sm btn-secondary" id="calToday">Today</button>
-            <button class="btn btn-sm btn-ghost cal-arrow" id="calPrev">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-            </button>
-            <h2 class="cal-current-title" id="calTitle"></h2>
-            <button class="btn btn-sm btn-ghost cal-arrow" id="calNext">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-            </button>
-          </div>
-          <div class="cal-view-group">
-            <button class="btn btn-sm btn-ghost cal-view-btn active" data-calview="dayGridMonth">Month</button>
-            <button class="btn btn-sm btn-ghost cal-view-btn" data-calview="timeGridWeek">Week</button>
-            <button class="btn btn-sm btn-ghost cal-view-btn" data-calview="listMonth">List</button>
-          </div>
+        <div class="hero">
+          <p class="hero-label" id="heroLabel"></p>
+          <p class="hero-amount" id="heroAmount">¥0</p>
+          <p class="hero-meta" id="heroMeta"></p>
+          <p class="hero-net" id="heroNet" hidden></p>
+          <p class="hero-note" id="heroNote" hidden></p>
         </div>
-        <div class="cal-month-stats" id="calMonthStats"></div>
-        <div id="fullcalendar"></div>
-      </section>
 
-      <!-- ─── JOBS VIEW ─── -->
-      <section class="view" id="view-jobs">
-        <div class="view-header-bar">
-          <p class="view-subtitle">Manage your positions, wages &amp; pay multipliers</p>
-          <button class="btn btn-primary" id="addJobBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Add Job
+        <div id="progressBlock"></div>
+
+        <section class="block">
+          <div class="block-head">
+            <h2>Recent shifts</h2>
+            <button class="link" data-nav="calendar">Calendar →</button>
+          </div>
+          <div class="list" id="recentShiftsList"></div>
+        </section>
+
+        <details class="block fold" id="homeDetails">
+          <summary>
+            <span>Details</span>
+            <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </summary>
+          <div class="fold-body">
+            <h3 class="sub-head">By job</h3>
+            <div class="list" id="byJobList"></div>
+            <h3 class="sub-head">Income</h3>
+            <div class="chart-wrap"><canvas id="homeChart"></canvas></div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- ─── CALENDAR ─── -->
+    <section class="view" id="view-calendar">
+      <div class="cal-bar">
+        <div class="cal-nav">
+          <button class="icon-btn" id="calPrev" aria-label="Previous">
+            <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>
           </button>
-        </div>
-        <div class="jobs-grid" id="jobsGrid"></div>
-        <div class="empty-state" id="jobsEmpty" style="display:none">
-          <div class="empty-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
-          </div>
-          <h3>No jobs yet</h3>
-          <p>Add your first job to start tracking your income</p>
-          <button class="btn btn-primary" id="addJobBtn2">Add Your First Job</button>
-        </div>
-      </section>
-
-      <!-- ─── REPORTS VIEW ─── -->
-      <section class="view" id="view-reports">
-        <div class="report-filters card">
-          <div class="filters-row">
-            <div class="filter-item">
-              <label>Year</label>
-              <select class="sel-sm" id="reportYear"></select>
-            </div>
-            <div class="filter-item">
-              <label>Month</label>
-              <select class="sel-sm" id="reportMonth">
-                <option value="">All Year</option>
-                <option value="0">January</option><option value="1">February</option>
-                <option value="2">March</option><option value="3">April</option>
-                <option value="4">May</option><option value="5">June</option>
-                <option value="6">July</option><option value="7">August</option>
-                <option value="8">September</option><option value="9">October</option>
-                <option value="10">November</option><option value="11">December</option>
-              </select>
-            </div>
-            <div class="filter-item">
-              <label>Job</label>
-              <select class="sel-sm" id="reportJob">
-                <option value="">All Jobs</option>
-              </select>
-            </div>
-            <button class="btn btn-sm btn-secondary" id="applyFilter">Apply</button>
-          </div>
-          <div class="export-row">
-            <span class="export-label">Export:</span>
-            <button class="btn btn-sm btn-ghost" id="exportPDF">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>PDF
-            </button>
-            <button class="btn btn-sm btn-ghost" id="exportExcel">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Excel
-            </button>
-            <button class="btn btn-sm btn-ghost" id="exportCSV">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>CSV
-            </button>
-            <button class="btn btn-sm btn-secondary" id="exportPayslip">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="12" y2="15"/></svg>給与明細
-            </button>
-          </div>
-        </div>
-
-        <div class="stats-grid" id="reportStatsGrid"></div>
-
-        <div class="charts-2col">
-          <div class="card chart-card">
-            <div class="card-header"><h3 class="card-title">Income Over Time</h3></div>
-            <div class="chart-wrap"><canvas id="rptChart1"></canvas></div>
-          </div>
-          <div class="card chart-card">
-            <div class="card-header"><h3 class="card-title">Income by Job</h3></div>
-            <div class="chart-wrap"><canvas id="rptChart2"></canvas></div>
-          </div>
-          <div class="card chart-card">
-            <div class="card-header"><h3 class="card-title">Hours Worked</h3></div>
-            <div class="chart-wrap"><canvas id="rptChart3"></canvas></div>
-          </div>
-          <div class="card chart-card">
-            <div class="card-header"><h3 class="card-title">Gross vs Net</h3></div>
-            <div class="chart-wrap"><canvas id="rptChart4"></canvas></div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header"><h3 class="card-title">Shift Details</h3></div>
-          <div class="table-scroll">
-            <table class="data-table">
-              <thead>
-                <tr><th>Date</th><th>Day</th><th>Job</th><th>Hours</th><th>Rate</th><th>OT</th><th>Gross</th><th>Notes</th></tr>
-              </thead>
-              <tbody id="reportTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- ─── TAX VIEW ─── -->
-      <section class="view" id="view-tax">
-        <div class="tax-layout">
-          <div class="card">
-            <div class="card-header">
-              <h3 class="card-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;vertical-align:middle;margin-right:6px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                Tax Deductions
-              </h3>
-              <label class="toggle-label">
-                <span>Enable</span>
-                <label class="toggle">
-                  <input type="checkbox" id="taxEnabled">
-                  <span class="toggle-slider"></span>
-                </label>
-              </label>
-            </div>
-            <div class="tax-desc">
-              <p>Configure Japanese tax deductions applied to your income. Toggle each item individually and adjust rates as needed.</p>
-            </div>
-            <div id="taxItemsList"></div>
-          </div>
-
-          <div>
-            <div class="card">
-              <div class="card-header"><h3 class="card-title">This Month's Preview</h3></div>
-              <div id="taxPreview"></div>
-            </div>
-            <div class="card chart-card" style="margin-top:16px">
-              <div class="card-header"><h3 class="card-title">Deduction Breakdown</h3></div>
-              <div class="chart-wrap"><canvas id="taxDonut"></canvas></div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ─── SETTINGS VIEW ─── -->
-      <section class="view" id="view-settings">
-        <div class="settings-grid">
-          <div class="card">
-            <div class="card-header"><h3 class="card-title">Display</h3></div>
-            <div class="settings-list">
-              <div class="setting-row">
-                <div class="setting-info">
-                  <p class="setting-name">Theme</p>
-                  <p class="setting-desc">Switch between dark and light mode</p>
-                </div>
-                <button class="btn btn-sm btn-secondary" id="settingsThemeBtn">Toggle Theme</button>
-              </div>
-              <div class="setting-row">
-                <div class="setting-info">
-                  <p class="setting-name">Currency</p>
-                  <p class="setting-desc">Display currency format</p>
-                </div>
-                <span class="badge badge-blue">¥ Japanese Yen</span>
-              </div>
-              <div class="setting-row">
-                <div class="setting-info">
-                  <p class="setting-name">Holiday Detection</p>
-                  <p class="setting-desc">Japanese national holidays automatically detected</p>
-                </div>
-                <span class="badge badge-green">Active</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-header"><h3 class="card-title">Data Management</h3></div>
-            <div class="settings-list">
-              <div class="setting-row">
-                <div class="setting-info">
-                  <p class="setting-name">Export Backup</p>
-                  <p class="setting-desc">Download all data as a JSON backup file</p>
-                </div>
-                <button class="btn btn-sm btn-secondary" id="exportDataBtn">Export JSON</button>
-              </div>
-              <div class="setting-row">
-                <div class="setting-info">
-                  <p class="setting-name">Import Backup</p>
-                  <p class="setting-desc">Restore data from a previous JSON backup</p>
-                </div>
-                <label class="btn btn-sm btn-secondary" style="cursor:pointer">
-                  Import JSON
-                  <input type="file" id="importFile" accept=".json" style="display:none">
-                </label>
-              </div>
-              <div class="setting-row">
-                <div class="setting-info">
-                  <p class="setting-name">Load Sample Data</p>
-                  <p class="setting-desc">Populate with demo shifts and jobs to explore the app</p>
-                </div>
-                <button class="btn btn-sm btn-secondary" id="loadSampleBtn">Load Demo</button>
-              </div>
-              <div class="setting-row">
-                <div class="setting-info">
-                  <p class="setting-name">Clear All Data</p>
-                  <p class="setting-desc">Permanently delete all shifts, jobs, and settings</p>
-                </div>
-                <button class="btn btn-sm btn-danger" id="clearDataBtn">Clear Data</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-header"><h3 class="card-title">About</h3></div>
-            <div class="settings-list">
-              <div class="setting-row">
-                <div class="setting-info"><p class="setting-name">App Name</p></div>
-                <span class="badge">ShiftPay Work Income Tracker</span>
-              </div>
-              <div class="setting-row">
-                <div class="setting-info"><p class="setting-name">Version</p></div>
-                <span class="badge">v1.1.0</span>
-              </div>
-              <div class="setting-row">
-                <div class="setting-info"><p class="setting-name">Storage</p></div>
-                <span class="badge badge-blue">localStorage</span>
-              </div>
-              <div class="setting-row">
-                <div class="setting-info">
-                  <p class="setting-name">Data Stats</p>
-                  <p class="setting-desc" id="dataStats">Loading...</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ─── PROFILE VIEW ─── -->
-      <section class="view" id="view-profile">
-        <div class="profile-layout">
-          <!-- Avatar + App Branding -->
-          <div class="card profile-card">
-            <div class="profile-hero">
-              <div class="profile-avatar-large" id="profileAvatarLarge">?</div>
-              <div class="profile-hero-info">
-                <h2 id="profileDisplayName">Your Profile</h2>
-                <p id="profileAppNameDisplay" style="color:var(--text-muted);font-size:14px">ShiftPay</p>
-              </div>
-            </div>
-            <div class="settings-list">
-              <div class="setting-row">
-                <div class="setting-info"><p class="setting-name">Your Name</p><p class="setting-desc">Shown on payslips and reports</p></div>
-                <input type="text" id="profileName" class="form-control" style="width:180px" placeholder="e.g. Hiro">
-              </div>
-              <div class="setting-row">
-                <div class="setting-info"><p class="setting-name">Avatar Color</p><p class="setting-desc">Background color of your avatar</p></div>
-                <input type="color" id="profileAvatarColor" class="form-control color-input" value="#3B82F6" style="width:60px;height:36px">
-              </div>
-              <div class="setting-row" style="border-bottom:none">
-                <div></div>
-                <button class="btn btn-primary" id="saveProfileBtn">Save Profile</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Monthly Goal -->
-          <div class="card">
-            <div class="card-header">
-              <h3 class="card-title">Monthly Income Goal</h3>
-            </div>
-            <div style="padding:20px">
-              <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">Set a monthly gross income target. Track your progress on the Dashboard.</p>
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label">Target Amount (¥/month)</label>
-                  <div class="input-with-suffix">
-                    <input type="number" id="monthlyGoalInput" class="form-control" placeholder="150000" min="0" step="10000">
-                    <span class="input-suffix">¥</span>
-                  </div>
-                </div>
-              </div>
-              <div id="goalPreview" style="margin-top:12px"></div>
-              <button class="btn btn-secondary" id="saveGoalBtn" style="margin-top:12px">Save Goal</button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ─── TEMPLATES VIEW ─── -->
-      <section class="view" id="view-templates">
-        <div class="view-header-bar">
-          <p class="view-subtitle">Save recurring shift patterns and apply them to any month</p>
-          <button class="btn btn-primary" id="addTemplateBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            New Template
+          <h2 class="cal-title" id="calTitle"></h2>
+          <button class="icon-btn" id="calNext" aria-label="Next">
+            <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
           </button>
+          <button class="btn btn-ghost btn-sm" id="calToday">Today</button>
         </div>
+        <div class="segmented segmented-sm">
+          <button class="cal-view-btn active" data-calview="dayGridMonth">Month</button>
+          <button class="cal-view-btn" data-calview="listMonth">List</button>
+        </div>
+      </div>
+      <p class="cal-stats" id="calMonthStats"></p>
+      <div id="fullcalendar"></div>
+    </section>
 
-        <div id="templatesList"></div>
-
-        <div class="empty-state" id="templatesEmpty" style="display:none">
-          <div class="empty-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-          </div>
-          <h3>No templates yet</h3>
-          <p>Create a recurring shift pattern to auto-fill your calendar</p>
-          <button class="btn btn-primary" id="addTemplateBtn2">Create First Template</button>
+    <!-- ─── JOBS ─── -->
+    <section class="view" id="view-jobs">
+      <section class="block">
+        <div class="block-head">
+          <h2>Your jobs</h2>
+          <button class="link" id="addJobBtn">+ Add job</button>
+        </div>
+        <div class="list" id="jobsList"></div>
+        <div class="empty empty-sm" id="jobsEmpty" hidden>
+          <p>No jobs yet. Add one with your hourly wage to start tracking.</p>
+          <button class="btn btn-primary" id="addJobBtn2">Add your first job</button>
         </div>
       </section>
 
-    </div><!-- .content-area -->
-  </div><!-- .main-wrapper -->
-</div><!-- .app-wrapper -->
+      <section class="block">
+        <div class="block-head">
+          <h2>Repeating shifts</h2>
+          <button class="link" id="addTemplateBtn">+ New</button>
+        </div>
+        <p class="block-hint">Save a weekly pattern once, then fill a whole month in one tap. Saved patterns also appear in the Add shift form.</p>
+        <div class="list" id="templatesList"></div>
+      </section>
+    </section>
 
-<!-- ═══════════════════════════════════════════════════════════
-     MOBILE BOTTOM NAVIGATION
-══════════════════════════════════════════════════════════════ -->
-<nav class="mobile-bottom-nav" id="mobileBottomNav">
-  <a class="mbn-item active" data-view="dashboard" href="#">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <!-- ─── SETTINGS ─── -->
+    <section class="view" id="view-settings">
+
+      <section class="block">
+        <h2 class="block-title">Profile &amp; goals</h2>
+        <div class="rows">
+          <label class="row">
+            <span class="row-label">Your name</span>
+            <input type="text" id="profileName" class="input input-w" placeholder="e.g. Hiro">
+          </label>
+          <label class="row">
+            <span class="row-label">Monthly goal<small>Shown on Home as a progress bar</small></span>
+            <span class="input-yen"><input type="number" id="monthlyGoalInput" class="input input-w" placeholder="0" min="0" step="10000"></span>
+          </label>
+          <label class="row">
+            <span class="row-label">Yearly limit (年収の壁)<small>Rules change every year, so check the current limit that applies to you.</small></span>
+            <span class="input-yen"><input type="number" id="yearlyLimitInput" class="input input-w" placeholder="0" min="0" step="10000"></span>
+          </label>
+          <div class="chip-row" id="limitPresets">
+            <button type="button" class="chip" data-limit="1230000">123万</button>
+            <button type="button" class="chip" data-limit="1300000">130万</button>
+            <button type="button" class="chip" data-limit="1500000">150万</button>
+            <button type="button" class="chip" data-limit="1600000">160万</button>
+            <button type="button" class="chip" data-limit="0">Off</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <div class="block-head">
+          <h2 class="block-title">Tax &amp; fees</h2>
+          <label class="switch" title="Enable deductions">
+            <input type="checkbox" id="taxEnabled">
+            <span class="switch-track"></span>
+          </label>
+        </div>
+        <p class="block-hint">Monthly amounts taken from your pay. When on, Home shows your take-home pay.</p>
+        <div id="taxItemsList"></div>
+        <p class="tax-total" id="taxTotal"></p>
+      </section>
+
+      <section class="block">
+        <h2 class="block-title">Export report</h2>
+        <div class="rows">
+          <div class="row row-wrap">
+            <select class="input" id="reportYear" aria-label="Year"></select>
+            <select class="input" id="reportMonth" aria-label="Month">
+              <option value="">Whole year</option>
+              <option value="0">January</option><option value="1">February</option>
+              <option value="2">March</option><option value="3">April</option>
+              <option value="4">May</option><option value="5">June</option>
+              <option value="6">July</option><option value="7">August</option>
+              <option value="8">September</option><option value="9">October</option>
+              <option value="10">November</option><option value="11">December</option>
+            </select>
+            <select class="input" id="reportJob" aria-label="Job">
+              <option value="">All jobs</option>
+            </select>
+          </div>
+          <div class="row row-wrap">
+            <button class="btn btn-ghost btn-sm" id="exportPDF">PDF</button>
+            <button class="btn btn-ghost btn-sm" id="exportExcel">Excel</button>
+            <button class="btn btn-ghost btn-sm" id="exportCSV">CSV</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2 class="block-title">Data</h2>
+        <div class="rows">
+          <div class="row">
+            <span class="row-label">Backup<small id="dataStats"></small></span>
+            <span class="row-actions">
+              <button class="btn btn-ghost btn-sm" id="exportDataBtn">Export</button>
+              <label class="btn btn-ghost btn-sm">Import<input type="file" id="importFile" accept=".json" hidden></label>
+            </span>
+          </div>
+          <div class="row">
+            <span class="row-label">Demo data<small>Replaces your data with 90 days of sample shifts</small></span>
+            <button class="btn btn-ghost btn-sm" id="loadSampleBtn">Load demo</button>
+          </div>
+          <div class="row">
+            <span class="row-label">Clear all data<small>Deletes all jobs, shifts and fees</small></span>
+            <button class="btn btn-danger-ghost btn-sm" id="clearDataBtn">Clear</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2 class="block-title">Appearance</h2>
+        <div class="rows">
+          <label class="row">
+            <span class="row-label">Dark mode</span>
+            <span class="switch">
+              <input type="checkbox" id="darkModeToggle">
+              <span class="switch-track"></span>
+            </span>
+          </label>
+        </div>
+      </section>
+
+      <p class="about" id="aboutLine">ShiftPay · 🦝 AkihiroLabs</p>
+    </section>
+  </main>
+</div>
+
+<!-- ═══════════ MOBILE TAB BAR ═══════════ -->
+<nav class="tabbar">
+  <a class="tab active" data-view="home" href="#">
+    <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>
     <span>Home</span>
   </a>
-  <a class="mbn-item" data-view="calendar" href="#">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+  <a class="tab" data-view="calendar" href="#">
+    <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M16 2.5v4M8 2.5v4M3 10h18"/></svg>
     <span>Calendar</span>
   </a>
-  <a class="mbn-item mbn-add" data-action="addShift" href="#">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  <a class="tab tab-add" data-action="addShift" href="#" aria-label="Add shift">
+    <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
   </a>
-  <a class="mbn-item" data-view="reports" href="#">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-    <span>Reports</span>
+  <a class="tab" data-view="jobs" href="#">
+    <svg viewBox="0 0 24 24"><rect x="2.5" y="7" width="19" height="13.5" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+    <span>Jobs</span>
   </a>
-  <a class="mbn-item" data-view="profile" href="#">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    <span>Profile</span>
+  <a class="tab" data-view="settings" href="#">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>
+    <span>Settings</span>
   </a>
 </nav>
 
-<!-- ═══════════════════════════════════════════════════════════
-     MODALS
-══════════════════════════════════════════════════════════════ -->
+<!-- ═══════════ MODALS ═══════════ -->
 <div class="overlay" id="overlay"></div>
 
-<!-- Shift Modal -->
-<div class="modal" id="shiftModal" role="dialog" aria-modal="true">
-  <div class="modal-header">
-    <h2 class="modal-title" id="shiftModalTitle">Add Shift</h2>
-    <button class="modal-close" id="shiftModalClose" aria-label="Close">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button>
+<!-- Shift -->
+<div class="modal" id="shiftModal" role="dialog" aria-modal="true" aria-labelledby="shiftModalTitle">
+  <div class="modal-head">
+    <h2 id="shiftModalTitle">Add shift</h2>
+    <button class="icon-btn" id="shiftModalClose" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
   </div>
   <div class="modal-body">
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Date *</label>
-        <input type="date" id="shiftDate" class="form-control" required>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Job *</label>
-        <select id="shiftJobId" class="form-control" required>
-          <option value="">Select job…</option>
-        </select>
-      </div>
+    <label class="field" id="shiftTemplateField" hidden>
+      <span>Use a saved shift</span>
+      <select id="shiftTemplate" class="input"><option value="">—</option></select>
+    </label>
+    <div class="field-row">
+      <label class="field"><span>Date</span><input type="date" id="shiftDate" class="input" required></label>
+      <label class="field"><span>Job</span><select id="shiftJobId" class="input" required><option value="">Select job…</option></select></label>
     </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Start Time *</label>
-        <input type="time" id="shiftStart" class="form-control" value="09:00" required>
-      </div>
-      <div class="form-group">
-        <label class="form-label">End Time *</label>
-        <input type="time" id="shiftEnd" class="form-control" value="17:00" required>
-      </div>
+    <div class="field-row field-row-3">
+      <label class="field"><span>Start</span><input type="time" id="shiftStart" class="input" value="09:00" required></label>
+      <label class="field"><span>End</span><input type="time" id="shiftEnd" class="input" value="17:00" required></label>
+      <label class="field"><span>Break (min)</span><input type="number" id="shiftBreak" class="input" value="60" min="0" max="480"></label>
     </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Break (minutes)</label>
-        <input type="number" id="shiftBreak" class="form-control" value="60" min="0" max="480">
+
+    <details class="more">
+      <summary>More options</summary>
+      <div class="more-body">
+        <div class="check-row">
+          <label class="check"><input type="checkbox" id="shiftIsOvertime"><span>Overtime ×1.25</span></label>
+          <label class="check"><input type="checkbox" id="shiftIsLateNight"><span>Late night +25% <small>(22:00–05:00)</small></span></label>
+        </div>
+        <label class="field"><span>Custom hourly rate (¥)</span><input type="number" id="shiftOverrideRate" class="input" placeholder="Use job rate" min="0"></label>
+        <label class="field"><span>Notes</span><textarea id="shiftNotes" class="input" rows="2" placeholder="Optional"></textarea></label>
       </div>
-      <div class="form-group">
-        <label class="form-label">Override Rate (¥/hr)</label>
-        <input type="number" id="shiftOverrideRate" class="form-control" placeholder="Use job default" min="0">
+    </details>
+
+    <div class="estimate" id="shiftPreview" hidden>
+      <div>
+        <span class="estimate-label">Estimated pay</span>
+        <span class="estimate-sub"><span id="prevHours"></span> · <span id="prevRate"></span> · <span id="previewDayType"></span></span>
+        <span class="estimate-sub" id="prevTaxRow" hidden><span></span> <strong id="prevTax"></strong></span>
+        <span id="prevNetRow" hidden><strong id="prevNet"></strong></span>
       </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Extra Pay</label>
-      <div class="extra-pay-row">
-        <label class="extra-pay-option">
-          <input type="checkbox" id="shiftIsOvertime">
-          <div class="extra-pay-box">
-            <span class="extra-pay-icon">⏰</span>
-            <span class="extra-pay-label">Overtime</span>
-            <span class="extra-pay-rate">×1.25</span>
-          </div>
-        </label>
-        <label class="extra-pay-option">
-          <input type="checkbox" id="shiftIsLateNight">
-          <div class="extra-pay-box">
-            <span class="extra-pay-icon">🌙</span>
-            <span class="extra-pay-label">Late Night</span>
-            <span class="extra-pay-rate">+25%</span>
-          </div>
-        </label>
-      </div>
-      <p class="form-hint">Late night = any hours between 22:00 and 05:00</p>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Notes</label>
-      <textarea id="shiftNotes" class="form-control" rows="2" placeholder="Optional notes…"></textarea>
-    </div>
-    <div class="shift-preview-box" id="shiftPreview" style="display:none">
-      <div class="preview-header">
-        <span id="previewDayType"></span>
-      </div>
-      <div class="preview-rows">
-        <div class="preview-row"><span>Hours worked</span><strong id="prevHours">—</strong></div>
-        <div class="preview-row"><span>Effective rate</span><strong id="prevRate">—</strong></div>
-        <div class="preview-row preview-highlight"><span>Estimated gross</span><strong id="prevGross">—</strong></div>
-        <div class="preview-row tax-row" id="prevTaxRow"><span>Taxes</span><strong id="prevTax">—</strong></div>
-        <div class="preview-row preview-net" id="prevNetRow"><span>Estimated net</span><strong id="prevNet">—</strong></div>
-      </div>
+      <strong class="estimate-amount" id="prevGross">¥0</strong>
     </div>
   </div>
-  <div class="modal-footer">
+  <div class="modal-foot">
+    <button class="btn btn-danger-ghost" id="deleteShiftBtn" hidden>Delete</button>
+    <span class="spacer"></span>
     <button class="btn btn-ghost" id="shiftCancelBtn">Cancel</button>
-    <button class="btn btn-danger" id="deleteShiftBtn" style="display:none">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
-      Delete
-    </button>
-    <button class="btn btn-primary" id="saveShiftBtn">Save Shift</button>
+    <button class="btn btn-primary" id="saveShiftBtn">Save</button>
   </div>
 </div>
 
-<!-- Job Modal -->
-<div class="modal" id="jobModal" role="dialog" aria-modal="true">
-  <div class="modal-header">
-    <h2 class="modal-title" id="jobModalTitle">Add Job</h2>
-    <button class="modal-close" id="jobModalClose" aria-label="Close">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button>
+<!-- Job -->
+<div class="modal" id="jobModal" role="dialog" aria-modal="true" aria-labelledby="jobModalTitle">
+  <div class="modal-head">
+    <h2 id="jobModalTitle">Add job</h2>
+    <button class="icon-btn" id="jobModalClose" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
   </div>
   <div class="modal-body">
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Job Title *</label>
-        <input type="text" id="jobName" class="form-control" placeholder="e.g. Part-time Staff" required>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Company (optional)</label>
-        <input type="text" id="jobCompany" class="form-control" placeholder="e.g. ABC Restaurant">
-      </div>
+    <div class="field-row">
+      <label class="field"><span>Job name</span><input type="text" id="jobName" class="input" placeholder="e.g. Hall staff" required></label>
+      <label class="field"><span>Company <small>(optional)</small></span><input type="text" id="jobCompany" class="input" placeholder="e.g. ABC Restaurant"></label>
     </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Base Hourly Wage (¥) *</label>
-        <input type="number" id="jobWage" class="form-control" placeholder="1200" min="0" required>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Color</label>
-        <input type="color" id="jobColor" class="form-control color-input" value="#3B82F6">
-      </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Weekend Rate <span class="label-optional">(Sat & Sun)</span></label>
-      <div class="optional-rate-row">
-        <label class="toggle">
-          <input type="checkbox" id="jobWeekendEnabled" checked>
-          <span class="toggle-slider"></span>
-        </label>
-        <div class="rate-mode-wrap" id="jobWeekendModeWrap">
-          <div class="rate-mode-tabs">
-            <button type="button" class="rate-mode-tab active" data-mode="multiplier" data-target="weekend">× Rate</button>
-            <button type="button" class="rate-mode-tab" data-mode="fixed" data-target="weekend">¥ Fixed</button>
-          </div>
-          <div class="rate-mode-input" id="weekendMultiplierInput">
-            <input type="number" id="jobWeekendMult" class="form-control input-sm" value="1.25" min="1" max="5" step="0.05">
-            <span class="input-suffix">×</span>
-          </div>
-          <div class="rate-mode-input" id="weekendFixedInput" style="display:none">
-            <span class="input-prefix-yen">¥</span>
-            <input type="number" id="jobWeekendFixed" class="form-control input-sm" placeholder="e.g. 1500" min="0" step="50">
-            <span class="input-suffix">/hr</span>
-          </div>
-        </div>
-        <span class="rate-preview-badge" id="weekendRatePreview"></span>
-      </div>
-      <p class="form-hint" id="jobWeekendHint">Weekend shifts pay 1.25× base wage</p>
+    <div class="field-row">
+      <label class="field"><span>Hourly wage (¥)</span><input type="number" id="jobWage" class="input" placeholder="1200" min="0" required></label>
+      <label class="field field-color"><span>Color</span><input type="color" id="jobColor" class="input input-color" value="#1E3A8A"></label>
     </div>
 
-    <div class="form-group">
-      <label class="form-label">Holiday Rate <span class="label-optional">(National Holidays)</span></label>
-      <div class="optional-rate-row">
-        <label class="toggle">
-          <input type="checkbox" id="jobHolidayEnabled" checked>
-          <span class="toggle-slider"></span>
-        </label>
-        <div class="rate-mode-wrap" id="jobHolidayModeWrap">
-          <div class="rate-mode-tabs">
-            <button type="button" class="rate-mode-tab active" data-mode="multiplier" data-target="holiday">× Rate</button>
-            <button type="button" class="rate-mode-tab" data-mode="fixed" data-target="holiday">¥ Fixed</button>
+    <details class="more">
+      <summary>Weekend &amp; holiday pay</summary>
+      <div class="more-body">
+        <div class="rate-block">
+          <div class="rate-head">
+            <label class="switch"><input type="checkbox" id="jobWeekendEnabled" checked><span class="switch-track"></span></label>
+            <span>Weekend (Sat, Sun)</span>
+            <span class="rate-badge" id="weekendRatePreview"></span>
           </div>
-          <div class="rate-mode-input" id="holidayMultiplierInput">
-            <input type="number" id="jobHolidayMult" class="form-control input-sm" value="1.5" min="1" max="5" step="0.05">
-            <span class="input-suffix">×</span>
+          <div class="rate-body" id="jobWeekendModeWrap">
+            <div class="segmented segmented-sm">
+              <button type="button" class="rate-mode-tab active" data-mode="multiplier" data-target="weekend">× Rate</button>
+              <button type="button" class="rate-mode-tab" data-mode="fixed" data-target="weekend">¥ Fixed</button>
+            </div>
+            <div class="rate-input" id="weekendMultiplierInput"><input type="number" id="jobWeekendMult" class="input" value="1.25" min="1" max="5" step="0.05"><span>×</span></div>
+            <div class="rate-input" id="weekendFixedInput" style="display:none"><span>¥</span><input type="number" id="jobWeekendFixed" class="input" placeholder="1500" min="0" step="50"><span>/hr</span></div>
           </div>
-          <div class="rate-mode-input" id="holidayFixedInput" style="display:none">
-            <span class="input-prefix-yen">¥</span>
-            <input type="number" id="jobHolidayFixed" class="form-control input-sm" placeholder="e.g. 1800" min="0" step="50">
-            <span class="input-suffix">/hr</span>
-          </div>
+          <p class="hint" id="jobWeekendHint"></p>
         </div>
-        <span class="rate-preview-badge" id="holidayRatePreview"></span>
+
+        <div class="rate-block">
+          <div class="rate-head">
+            <label class="switch"><input type="checkbox" id="jobHolidayEnabled" checked><span class="switch-track"></span></label>
+            <span>National holidays</span>
+            <span class="rate-badge" id="holidayRatePreview"></span>
+          </div>
+          <div class="rate-body" id="jobHolidayModeWrap">
+            <div class="segmented segmented-sm">
+              <button type="button" class="rate-mode-tab active" data-mode="multiplier" data-target="holiday">× Rate</button>
+              <button type="button" class="rate-mode-tab" data-mode="fixed" data-target="holiday">¥ Fixed</button>
+            </div>
+            <div class="rate-input" id="holidayMultiplierInput"><input type="number" id="jobHolidayMult" class="input" value="1.5" min="1" max="5" step="0.05"><span>×</span></div>
+            <div class="rate-input" id="holidayFixedInput" style="display:none"><span>¥</span><input type="number" id="jobHolidayFixed" class="input" placeholder="1800" min="0" step="50"><span>/hr</span></div>
+          </div>
+          <p class="hint" id="jobHolidayHint"></p>
+        </div>
       </div>
-      <p class="form-hint" id="jobHolidayHint">Holiday shifts pay 1.5× base wage</p>
-    </div>
-    <div class="job-preview-box" id="jobPreviewBox">
-      <div class="job-preview-header" id="jobPreviewColor">
-        <span id="jobPreviewName">Job Preview</span>
-      </div>
-      <div class="job-preview-rates">
-        <div><span>Weekday</span><strong id="jpWeekday">¥0/hr</strong></div>
-        <div id="jpWeekendRow"><span>Weekend</span><strong id="jpWeekend">¥0/hr</strong><span class="rate-disabled-tag" id="jpWeekendTag" style="display:none">same as weekday</span></div>
-        <div id="jpHolidayRow"><span>Holiday</span><strong id="jpHoliday">¥0/hr</strong><span class="rate-disabled-tag" id="jpHolidayTag" style="display:none">same as weekday</span></div>
-      </div>
+    </details>
+
+    <!-- Kept for modals.js live preview (hidden in minimalist UI) -->
+    <div hidden>
+      <div id="jobPreviewColor"><span id="jobPreviewName"></span></div>
+      <strong id="jpWeekday"></strong><strong id="jpWeekend"></strong><span id="jpWeekendTag"></span>
+      <strong id="jpHoliday"></strong><span id="jpHolidayTag"></span>
     </div>
   </div>
-  <div class="modal-footer">
+  <div class="modal-foot">
+    <button class="btn btn-danger-ghost" id="deleteJobBtn" hidden>Delete</button>
+    <span class="spacer"></span>
     <button class="btn btn-ghost" id="jobCancelBtn">Cancel</button>
-    <button class="btn btn-danger" id="deleteJobBtn" style="display:none">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-      Delete
-    </button>
-    <button class="btn btn-primary" id="saveJobBtn">Save Job</button>
+    <button class="btn btn-primary" id="saveJobBtn">Save</button>
   </div>
 </div>
 
-<!-- Confirm Modal -->
-<div class="modal modal-sm" id="confirmModal" role="dialog" aria-modal="true">
-  <div class="modal-header">
-    <h2 class="modal-title" id="confirmTitle">Confirm Action</h2>
-  </div>
-  <div class="modal-body">
-    <p id="confirmMessage" style="color:var(--text-secondary);line-height:1.6"></p>
-  </div>
-  <div class="modal-footer">
+<!-- Confirm -->
+<div class="modal modal-sm" id="confirmModal" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
+  <div class="modal-head"><h2 id="confirmTitle">Are you sure?</h2></div>
+  <div class="modal-body"><p id="confirmMessage" class="muted"></p></div>
+  <div class="modal-foot">
+    <span class="spacer"></span>
     <button class="btn btn-ghost" id="confirmCancel">Cancel</button>
     <button class="btn btn-danger" id="confirmOk">Delete</button>
   </div>
 </div>
 
-<!-- Template Modal -->
-<div class="modal" id="templateModal" role="dialog" aria-modal="true">
-  <div class="modal-header">
-    <h2 class="modal-title">New Shift Template</h2>
-    <button class="modal-close" id="templateModalClose" aria-label="Close">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button>
+<!-- Repeating shift (template) -->
+<div class="modal" id="templateModal" role="dialog" aria-modal="true" aria-labelledby="templateModalTitle">
+  <div class="modal-head">
+    <h2 id="templateModalTitle">New repeating shift</h2>
+    <button class="icon-btn" id="templateModalClose" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
   </div>
   <div class="modal-body">
-    <div class="form-group">
-      <label class="form-label">Template Name *</label>
-      <input type="text" id="tplName" class="form-control" placeholder="e.g. Weekly Restaurant Shift">
+    <div class="field-row">
+      <label class="field"><span>Name</span><input type="text" id="tplName" class="input" placeholder="e.g. Weekday evenings"></label>
+      <label class="field"><span>Job</span><select id="tplJobId" class="input"><option value="">Select job…</option></select></label>
     </div>
-    <div class="form-group">
-      <label class="form-label">Job *</label>
-      <select id="tplJobId" class="form-control">
-        <option value="">Select job…</option>
-      </select>
+    <div class="field-row field-row-3">
+      <label class="field"><span>Start</span><input type="time" id="tplStart" class="input" value="09:00"></label>
+      <label class="field"><span>End</span><input type="time" id="tplEnd" class="input" value="17:00"></label>
+      <label class="field"><span>Break (min)</span><input type="number" id="tplBreak" class="input" value="60" min="0"></label>
     </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Start Time</label>
-        <input type="time" id="tplStart" class="form-control" value="09:00">
-      </div>
-      <div class="form-group">
-        <label class="form-label">End Time</label>
-        <input type="time" id="tplEnd" class="form-control" value="17:00">
-      </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Break (minutes)</label>
-      <input type="number" id="tplBreak" class="form-control" value="60" min="0">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Repeat on days</label>
+    <div class="field">
+      <span>Repeat on</span>
       <div class="day-picker" id="tplDays">
-        <label class="day-btn"><input type="checkbox" value="0"><span>Sun</span></label>
-        <label class="day-btn"><input type="checkbox" value="1"><span>Mon</span></label>
-        <label class="day-btn"><input type="checkbox" value="2"><span>Tue</span></label>
-        <label class="day-btn"><input type="checkbox" value="3"><span>Wed</span></label>
-        <label class="day-btn"><input type="checkbox" value="4"><span>Thu</span></label>
-        <label class="day-btn"><input type="checkbox" value="5"><span>Fri</span></label>
-        <label class="day-btn"><input type="checkbox" value="6"><span>Sat</span></label>
+        <label><input type="checkbox" value="1"><span>Mon</span></label>
+        <label><input type="checkbox" value="2"><span>Tue</span></label>
+        <label><input type="checkbox" value="3"><span>Wed</span></label>
+        <label><input type="checkbox" value="4"><span>Thu</span></label>
+        <label><input type="checkbox" value="5"><span>Fri</span></label>
+        <label><input type="checkbox" value="6"><span>Sat</span></label>
+        <label><input type="checkbox" value="0"><span>Sun</span></label>
       </div>
     </div>
   </div>
-  <div class="modal-footer">
+  <div class="modal-foot">
+    <span class="spacer"></span>
     <button class="btn btn-ghost" id="templateCancelBtn">Cancel</button>
-    <button class="btn btn-primary" id="saveTemplateBtn">Save Template</button>
+    <button class="btn btn-primary" id="saveTemplateBtn">Save</button>
   </div>
 </div>
 
-<!-- Toast Container -->
-<div class="toast-container" id="toastContainer" aria-live="polite"></div>
-
-<!-- Footer -->
-<footer class="app-footer">
-  <span>Developed by <strong>Akihiro Labs</strong></span>
-</footer>
+<div class="toasts" id="toastContainer" aria-live="polite"></div>
 
 <!-- SCRIPTS -->
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>

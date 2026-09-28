@@ -1,803 +1,629 @@
 /**
- * app.js — ShiftPay Application Controller
- * Handles navigation, all view rendering, profile, goals,
- * templates, Tax & Fees (items array), theme, and data management.
+ * app.js — ShiftPay Application Controller (v1.2 minimalist layout)
+ * 4 views: Home · Calendar · Jobs · Settings
+ *  - Home:     one big number (Week / Month / Year), take-home, goal + 年収の壁 bars,
+ *              recent shifts, folded details (by job + chart)
+ *  - Jobs:     jobs list + repeating shifts (templates)
+ *  - Settings: profile & goals, tax & fees, report export, data, appearance
+ * By AkihiroLabs.
  */
 
 const App = (() => {
 
-  const VIEWS = ['dashboard','calendar','jobs','templates','reports','tax','settings','profile'];
-  let _view          = 'dashboard';
+  const VIEWS   = ['home', 'calendar', 'jobs', 'settings'];
+  /* Old view names (v1.1) → new home */
+  const ALIASES = { dashboard: 'home', reports: 'settings', tax: 'settings', profile: 'settings', templates: 'jobs' };
+  const TITLES  = { home: 'Home', calendar: 'Calendar', jobs: 'Jobs', settings: 'Settings' };
+  const DOW     = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  let _view          = 'home';
+  let _period        = 'month';
   let _calendarReady = false;
+
+  /* ── Helpers ── */
+  const $    = id => document.getElementById(id);
+  const yen  = n  => Income.formatCurrency(n);
+  const hrs  = n  => Income.formatHours(n);
+  const plural = (n, word) => `${n} ${word}${n !== 1 ? 's' : ''}`;
+
+  function _esc(str) {
+    return String(str ?? '').replace(/[&<>"']/g, c =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  function _fmtDate(dateStr, opts = { weekday: 'short', month: 'short', day: 'numeric' }) {
+    return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', opts);
+  }
+
+  function _saveSetting(patch) {
+    Storage.saveSettings({ ...Storage.getSettings(), ...patch });
+  }
 
   /* ════════════════════════════════════════════
      NAVIGATION
   ════════════════════════════════════════════ */
   function navigateTo(view) {
+    view = ALIASES[view] || view;
     if (!VIEWS.includes(view)) return;
     _view = view;
 
-    document.querySelectorAll('.nav-link, .mbn-item[data-view]').forEach(el => {
+    document.querySelectorAll('.nav-link, .tab[data-view]').forEach(el => {
       el.classList.toggle('active', el.dataset.view === view);
     });
-
     document.querySelectorAll('.view').forEach(el => {
       el.classList.toggle('active', el.id === `view-${view}`);
     });
 
-    const titles = {
-      dashboard: 'Dashboard', calendar: 'Calendar', jobs: 'Jobs',
-      templates: 'Templates', reports: 'Reports',
-      tax: 'Tax & Fees', settings: 'Settings', profile: 'Profile',
-    };
-    document.getElementById('pageTitle').textContent = titles[view] || view;
+    _setTitle();
 
     if (view === 'calendar') {
       if (!_calendarReady) { CalendarView.init(); _calendarReady = true; }
       CalendarView.refresh();
     }
+    _renderView(view);
+    window.scrollTo({ top: 0 });
+  }
 
-    if (view === 'dashboard') _renderDashboard();
-    if (view === 'jobs')      _renderJobs();
-    if (view === 'templates') _renderTemplates();
-    if (view === 'reports')   { Reports.refreshSelectors(); Reports.render(); }
-    if (view === 'tax')       _renderTax();
-    if (view === 'settings')  _renderSettings();
-    if (view === 'profile')   _renderProfile();
+  function _setTitle() {
+    const name = Storage.getProfile().name;
+    $('pageTitle').textContent = _view === 'home' && name ? `Hi, ${name}` : TITLES[_view];
+  }
 
-    if (window.innerWidth < 900) {
-      document.getElementById('sidebar')?.classList.remove('open');
-    }
+  function _renderView(view) {
+    if (view === 'home')     _renderHome();
+    if (view === 'jobs')     { _renderJobs(); _renderTemplates(); }
+    if (view === 'settings') _renderSettings();
   }
 
   /* ════════════════════════════════════════════
-     DASHBOARD
+     HOME
   ════════════════════════════════════════════ */
-  function _renderDashboard() {
+  function _renderHome() {
+    const jobs   = Storage.getJobs();
+    const shifts = Storage.getShifts();
+
+    /* ─ Empty state ─ */
+    const empty = !jobs.length || !shifts.length;
+    $('homeEmpty').hidden = !empty;
+    $('homeMain').hidden  = empty;
+    if (empty) {
+      if (!jobs.length) {
+        $('homeEmptyTitle').textContent = 'Welcome to ShiftPay';
+        $('homeEmptyText').textContent  = 'Start by adding a job with your hourly wage.';
+        $('homeEmptyBtn').textContent   = 'Add a job';
+      } else {
+        $('homeEmptyTitle').textContent = 'No shifts yet';
+        $('homeEmptyText').textContent  = 'Add your first shift and your earnings will show up here.';
+        $('homeEmptyBtn').textContent   = 'Add your first shift';
+      }
+      return;
+    }
+
+    document.querySelectorAll('.segmented [data-period]').forEach(b =>
+      b.classList.toggle('active', b.dataset.period === _period));
+
     const tax = Storage.getTaxSettings();
+    const p   = _periodData(_period, tax);
+
+    $('heroLabel').textContent  = p.label;
+    $('heroAmount').textContent = yen(p.stat.gross);
+    $('heroMeta').textContent   = `${plural(p.stat.count, 'shift')} · ${hrs(p.stat.hours)}`;
+
+    /* Take-home (monthly deductions → month view only) */
+    const netEl = $('heroNet');
+    if (_period === 'month' && tax.enabled && p.stat.deductions > 0) {
+      netEl.innerHTML = `Take-home ≈ <strong>${yen(p.stat.net)}</strong> after ${yen(p.stat.deductions)} tax &amp; fees`;
+      netEl.hidden = false;
+    } else {
+      netEl.hidden = true;
+    }
+
+    /* Upcoming shifts already counted in this period */
+    const today    = Income.todayKey();
+    const upcoming = p.shifts.filter(s => s.date > today);
+    const noteEl   = $('heroNote');
+    if (upcoming.length) {
+      const upAgg = Income.calcAggregate(upcoming);
+      noteEl.textContent = `Includes ${yen(upAgg.gross)} from ${plural(upcoming.length, 'upcoming shift')}`;
+      noteEl.hidden = false;
+    } else {
+      noteEl.hidden = true;
+    }
+
+    _renderProgress(p);
+    _renderRecent(jobs);
+    if ($('homeDetails').open) _renderDetails(p);
+  }
+
+  /* Build numbers for Week / Month / Year */
+  function _periodData(period, tax) {
     const now = new Date();
     const y   = now.getFullYear();
     const m   = now.getMonth();
 
-    const todayStat = Income.getToday(tax);
-    const weekStat  = Income.getThisWeek(tax);
-    const monthStat = Income.getMonth(y, m, tax);
-    const yearStat  = Income.getYear(y, tax);
-    const allStat   = Income.getAll(tax);
-
-    const grid = document.getElementById('statsGrid');
-    if (grid) {
-      grid.innerHTML = [
-        { label:'Today',      ...todayStat },
-        { label:'This Week',  ...weekStat  },
-        { label:'This Month', ...monthStat },
-        { label:'This Year',  ...yearStat  },
-        { label:'All Time',   ...allStat   },
-      ].map(c => `
-        <div class="stat-card">
-          <span class="stat-label">${c.label}</span>
-          <span class="stat-value">${Income.formatCurrency(c.gross)}</span>
-          ${tax.enabled && c.deductions > 0 ? `<span class="stat-net">Net ${Income.formatCurrency(c.net)}</span>` : ''}
-          <span class="stat-meta">${c.count} shift${c.count !== 1 ? 's' : ''} · ${Income.formatHours(c.hours)}</span>
-        </div>`).join('');
+    if (period === 'week') {
+      const dow    = now.getDay();
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
+      const days = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(monday); d.setDate(monday.getDate() + i);
+        return JapaneseHolidays.toKey(d);
+      });
+      const shifts = Storage.getShiftsInRange(days[0], days[6]);
+      return {
+        label:  `This week · ${_fmtDate(days[0], { month: 'short', day: 'numeric' })} – ${_fmtDate(days[6], { month: 'short', day: 'numeric' })}`,
+        stat:   Income.getThisWeek(tax),
+        shifts,
+        chartLabels: days.map(k => DOW[new Date(k + 'T12:00:00').getDay()]),
+        chartData:   days.map(k => Math.round(Income.calcAggregate(shifts.filter(s => s.date === k)).gross)),
+      };
     }
 
-    _renderProjection(y, m, tax);
-    _renderGoalProgress(monthStat.gross);
-    _renderRecentShifts(tax);
-    _renderMonthSummary(y, m, tax);
-  }
-
-  function _renderMonthSummary(year, month, tax) {
-    const el = document.getElementById('monthSummaryContent');
-    if (!el) return;
-    const now        = new Date();
-    const monthData  = Income.getMonth(year, month, tax);
-    const jobs       = Storage.getJobs();
-    const allShifts  = Storage.getShiftsForMonth(year, month);
-    const jobMap     = new Map(jobs.map(j => [j.id, j]));
-
-    if (!allShifts.length) {
-      el.innerHTML = `<p style="color:var(--text-muted);text-align:center;padding:20px 0">No shifts this month yet.</p>`;
-      return;
+    if (period === 'year') {
+      const monthly = Income.getMonthlyBreakdown(y, tax);
+      return {
+        label:  String(y),
+        stat:   Income.getYear(y, tax),
+        shifts: Storage.getShiftsForYear(y),
+        chartLabels: monthly.map(x => x.label),
+        chartData:   monthly.map(x => Math.round(x.gross)),
+      };
     }
 
-    /* Income per job this month */
-    const byJob = {};
-    allShifts.forEach(s => {
-      const job = jobMap.get(s.jobId);
-      if (!job) return;
-      const d = Income.calcShiftDetails(s, job, tax);
-      if (!byJob[s.jobId]) byJob[s.jobId] = { name: job.name, color: job.color, gross: 0, hours: 0 };
-      byJob[s.jobId].gross += d.gross;
-      byJob[s.jobId].hours += d.workedHours;
-    });
-
-    const rows = Object.values(byJob).sort((a,b) => b.gross - a.gross).map(j => `
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="width:10px;height:10px;border-radius:50%;background:${j.color};display:inline-block;flex-shrink:0"></span>
-          <span style="font-size:13px;font-weight:500">${j.name}</span>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:14px;font-weight:700;font-family:var(--font-mono);color:var(--accent-gold)">${Income.formatCurrency(j.gross)}</div>
-          <div style="font-size:11px;color:var(--text-muted)">${Income.formatHours(j.hours)}</div>
-        </div>
-      </div>`).join('');
-
-    el.innerHTML = rows + `
-      <div style="display:flex;justify-content:space-between;padding:12px 0;font-weight:700">
-        <span>Total</span>
-        <span style="font-family:var(--font-mono);color:var(--accent-green)">${Income.formatCurrency(monthData.gross)}</span>
-      </div>`;
+    /* month (default) */
+    const shifts = Storage.getShiftsForMonth(y, m);
+    const nDays  = new Date(y, m + 1, 0).getDate();
+    const keys   = Array.from({ length: nDays }, (_, i) =>
+      `${y}-${String(m + 1).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`);
+    return {
+      label:  now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+      stat:   Income.getMonth(y, m, tax),
+      shifts,
+      chartLabels: keys.map((_, i) => String(i + 1)),
+      chartData:   keys.map(k => Math.round(Income.calcAggregate(shifts.filter(s => s.date === k)).gross)),
+    };
   }
 
-  function _renderProjection(year, month, tax) {
-    const banner = document.getElementById('projectionBanner');
-    if (!banner) return;
-    const proj = Income.getProjected(year, month, tax);
-    if (proj.total.count === 0) { banner.innerHTML = ''; return; }
-    const pct = proj.completionPct;
-    banner.innerHTML = `
-      <div class="proj-content">
-        <div class="proj-left">
-          <div class="proj-title">Month Projection</div>
-          <div class="proj-amount">${Income.formatCurrency(proj.total.gross)}</div>
-          ${tax.enabled ? `<div class="proj-net-label">Net ${Income.formatCurrency(proj.total.net)}</div>` : ''}
-        </div>
-        <div class="proj-right">
-          <div class="proj-meta">
-            <span>Earned: ${Income.formatCurrency(proj.earned.gross)}</span>
-            <span>${proj.daysRemaining} day${proj.daysRemaining !== 1 ? 's' : ''} left</span>
-          </div>
-          <div class="proj-bar"><div class="proj-bar-fill" style="width:${pct}%"></div></div>
-          <div class="proj-shifts-meta">${proj.earned.count} done · ${proj.projected.count} upcoming</div>
-        </div>
-      </div>`;
-  }
-
-  function _renderGoalProgress(monthGross) {
+  /* Monthly goal + yearly limit (年収の壁) bars */
+  function _renderProgress(p) {
+    const el    = $('progressBlock');
     const goals = Storage.getGoals();
-    const goal  = goals.monthlyGross || 0;
-    const el    = document.getElementById('goalProgressBanner');
-    if (!el) return;
-    if (goal <= 0) { el.innerHTML = ''; return; }
-    const pct  = Math.min(100, Math.round((monthGross / goal) * 100));
-    const over = monthGross >= goal;
-    el.innerHTML = `
-      <div class="goal-banner${over ? ' goal-achieved' : ''}">
-        <div class="goal-label">
-          <span>Monthly Goal</span>
-          <span class="goal-pct">${pct}%</span>
-        </div>
-        <div class="goal-bar">
-          <div class="goal-bar-fill" style="width:${pct}%;background:${over ? 'var(--accent-green)' : 'var(--accent-blue)'}"></div>
-        </div>
-        <div class="goal-detail">
-          ${Income.formatCurrency(monthGross)} of ${Income.formatCurrency(goal)}
-          ${over ? ' 🎉 Goal reached!' : ' remaining: ' + Income.formatCurrency(goal - monthGross)}
-        </div>
+    const parts = [];
+
+    if (_period === 'month' && goals.monthlyGross > 0) {
+      const gross = p.stat.gross;
+      const pct   = Math.min(100, Math.round(gross / goals.monthlyGross * 100));
+      const done  = gross >= goals.monthlyGross;
+      parts.push(_progressHTML({
+        title: 'Monthly goal',
+        value: `${yen(gross)} / ${yen(goals.monthlyGross)}`,
+        pct,
+        cls:   done ? 'is-done' : '',
+        foot:  done ? 'Goal reached 🎉' : `${yen(goals.monthlyGross - gross)} to go`,
+      }));
+    }
+
+    if (goals.yearlyLimit > 0) {
+      const year  = new Date().getFullYear();
+      const gross = Income.getYear(year, null).gross;
+      const ratio = gross / goals.yearlyLimit;
+      const pct   = Math.min(100, Math.round(ratio * 100));
+      const over  = gross > goals.yearlyLimit;
+      parts.push(_progressHTML({
+        title: `年収の壁 · ${year}`,
+        value: `${yen(gross)} / ${yen(goals.yearlyLimit)}`,
+        pct,
+        cls:   over ? 'is-over' : ratio >= 0.85 ? 'is-warn' : '',
+        foot:  over ? `Over by ${yen(gross - goals.yearlyLimit)}` : `${yen(goals.yearlyLimit - gross)} left this year`,
+      }));
+    }
+
+    el.innerHTML = parts.join('');
+    el.hidden    = !parts.length;
+  }
+
+  function _progressHTML({ title, value, pct, cls, foot }) {
+    return `
+      <div class="progress ${cls}">
+        <div class="progress-top"><span>${title}</span><span class="num">${value}</span></div>
+        <div class="bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct}%"></i></div>
+        <p class="progress-foot">${foot}</p>
       </div>`;
   }
 
-  function _renderRecentShifts(tax) {
-    const container = document.getElementById('recentShiftsList');
-    if (!container) return;
-    const shifts = Storage.getShifts().sort((a,b) => b.date.localeCompare(a.date)).slice(0, 8);
-    if (!shifts.length) {
-      container.innerHTML = `<div class="empty-mini">No shifts yet — tap <strong>+</strong> or click a calendar day to add one.</div>`;
-      return;
-    }
-    const jobs   = Storage.getJobs();
-    const jobMap = new Map(jobs.map(j => [j.id, j]));
-    const DOW    = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    container.innerHTML = shifts.map(shift => {
-      const job = jobMap.get(shift.jobId);
-      if (!job) return '';
-      const d   = Income.calcShiftDetails(shift, job, tax);
-      const dt  = new Date(shift.date + 'T12:00:00');
-      const ot  = d.overtimeDetails;
-      const otBadge = ot?.hasOvertime ? `<span class="ot-badge">OT</span>` : '';
-      const lnBadge = ot?.hasLateNight ? `<span class="ln-badge">深夜</span>` : '';
-      return `
-        <div class="shift-row" role="button" tabindex="0"
-             onclick="Modals.openShiftModal(null,'${shift.id}')"
-             onkeydown="if(event.key==='Enter')Modals.openShiftModal(null,'${shift.id}')">
-          <div class="shift-date-col">
-            <span class="shift-day">${DOW[dt.getDay()]}</span>
-            <span class="shift-date-num">${dt.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>
-          </div>
-          <div class="shift-job-col">
-            <span class="job-color-dot" style="background:${job.color}"></span>
-            <span class="shift-job-name">${job.name}</span>
-            ${otBadge}${lnBadge}
-          </div>
-          <div class="shift-time-col">${shift.startTime}–${shift.endTime}</div>
-          <div class="shift-hours-col">${Income.formatHours(d.workedHours)}</div>
-          <div class="shift-earn-col">${Income.formatCurrency(d.gross)}</div>
-        </div>`;
-    }).join('');
+  /* Next shift + recent (past) shifts */
+  function _renderRecent(jobs) {
+    const container = $('recentShiftsList');
+    const jobMap    = new Map(jobs.map(j => [j.id, j]));
+    const today     = Income.todayKey();
+    const all       = Storage.getShifts();
+
+    const next = all.filter(s => s.date >= today && jobMap.has(s.jobId))
+                    .sort((a, b) => (a.date + a.startTime).localeCompare(b.date + b.startTime))
+                    .find(s => s.date > today || s.startTime >= new Date().toTimeString().slice(0, 5));
+
+    const recent = all.filter(s => s.date <= today && jobMap.has(s.jobId) && s !== next)
+                      .sort((a, b) => (b.date + b.startTime).localeCompare(a.date + a.startTime))
+                      .slice(0, 5);
+
+    let html = '';
+    if (next) html += _shiftRowHTML(next, jobMap.get(next.jobId), 'Next');
+    html += recent.map(s => _shiftRowHTML(s, jobMap.get(s.jobId))).join('');
+    container.innerHTML = html || `<p class="list-empty">No past shifts yet.</p>`;
+  }
+
+  function _shiftRowHTML(shift, job, tag) {
+    const d  = Income.calcShiftDetails(shift, job, null);
+    const ot = d.overtimeDetails;
+    const badges = [
+      tag             ? `<span class="tag tag-accent">${tag}</span>` : '',
+      d.isHoliday     ? `<span class="tag">祝</span>` : '',
+      ot?.hasOvertime ? `<span class="tag">OT</span>` : '',
+      ot?.hasLateNight ? `<span class="tag">深夜</span>` : '',
+    ].join('');
+    return `
+      <button class="item" data-shift-id="${shift.id}">
+        <span class="dot" style="background:${_esc(job.color)}"></span>
+        <span class="item-main">
+          <span class="item-title">${_esc(job.name)} ${badges}</span>
+          <span class="item-sub">${_fmtDate(shift.date)} · ${shift.startTime}–${shift.endTime} · ${hrs(d.workedHours)}</span>
+        </span>
+        <span class="item-amount">${yen(d.gross)}</span>
+      </button>`;
+  }
+
+  /* Folded details: by job + income chart */
+  function _renderDetails(p) {
+    p = p || _periodData(_period, Storage.getTaxSettings());
+    const byJob = Income.getIncomeByJob(p.shifts);
+    const total = byJob.reduce((sum, j) => sum + j.gross, 0) || 1;
+
+    $('byJobList').innerHTML = byJob.length ? byJob.map(j => `
+      <div class="item item-static">
+        <span class="dot" style="background:${_esc(j.color)}"></span>
+        <span class="item-main">
+          <span class="item-title">${_esc(j.jobName)}</span>
+          <span class="item-sub">${plural(j.count, 'shift')} · ${hrs(j.hours)} · ${Math.round(j.gross / total * 100)}%</span>
+        </span>
+        <span class="item-amount">${yen(j.gross)}</span>
+      </div>`).join('') : `<p class="list-empty">No shifts in this period.</p>`;
+
+    ChartsView.renderSimpleBar('homeChart', p.chartLabels, p.chartData);
   }
 
   /* ════════════════════════════════════════════
-     JOBS VIEW
+     JOBS
   ════════════════════════════════════════════ */
   function _renderJobs() {
-    const jobs   = Storage.getJobs();
-    const grid   = document.getElementById('jobsGrid');
-    const empty  = document.getElementById('jobsEmpty');
-    if (!grid) return;
-    if (!jobs.length) {
-      grid.style.display = 'none';
-      if (empty) empty.style.display = '';
+    const jobs  = Storage.getJobs();
+    const list  = $('jobsList');
+    $('jobsEmpty').hidden = !!jobs.length;
+    $('addJobBtn').hidden = !jobs.length;
+
+    const all = Storage.getShifts();
+    list.innerHTML = jobs.map(job => {
+      const agg = Income.calcAggregate(all.filter(s => s.jobId === job.id));
+      const sub = [job.company, plural(agg.count, 'shift'), `${yen(agg.gross)} earned`].filter(Boolean).map(_esc).join(' · ');
+      return `
+        <button class="item" data-job-id="${job.id}">
+          <span class="dot" style="background:${_esc(job.color)}"></span>
+          <span class="item-main">
+            <span class="item-title">${_esc(job.name)}</span>
+            <span class="item-sub">${sub}</span>
+          </span>
+          <span class="item-amount">${yen(job.baseWage)}<small>/hr</small></span>
+        </button>`;
+    }).join('');
+  }
+
+  function _renderTemplates() {
+    const templates = Storage.getTemplates();
+    const jobMap    = new Map(Storage.getJobs().map(j => [j.id, j]));
+    const list      = $('templatesList');
+    const now       = new Date();
+
+    if (!templates.length) {
+      list.innerHTML = `<p class="list-empty">No repeating shifts yet.</p>`;
       return;
     }
-    if (empty) empty.style.display = 'none';
-    grid.style.display = '';
-    const tax       = Storage.getTaxSettings();
-    const allShifts = Storage.getShifts();
-    grid.innerHTML = jobs.map(job => {
-      const agg = Income.calcAggregate(allShifts.filter(s => s.jobId === job.id));
+
+    const order = [1, 2, 3, 4, 5, 6, 0];
+    const monthOptions = Array.from({ length: 3 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      return `<option value="${d.getFullYear()}-${d.getMonth()}">${d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</option>`;
+    }).join('');
+
+    list.innerHTML = templates.map(tpl => {
+      const job  = jobMap.get(tpl.jobId);
+      const days = order.filter(d => (tpl.daysOfWeek || []).includes(d)).map(d => DOW[d]).join(', ') || 'No days';
       return `
-        <div class="job-card" role="button" tabindex="0" style="border-top:3px solid ${job.color}"
-             onclick="Modals.openJobModal('${job.id}')"
-             onkeydown="if(event.key==='Enter')Modals.openJobModal('${job.id}')">
-          <div class="job-card-header">
-            <div class="job-color-swatch" style="background:${job.color}"></div>
-            <div>
-              <h3 class="job-card-name">${job.name}</h3>
-              ${job.company ? `<p class="job-card-company">${job.company}</p>` : ''}
-            </div>
-          </div>
-          <div class="job-card-rates">
-            <div class="rate-row"><span class="rate-label">Weekday</span><span class="rate-val">${Income.formatCurrency(job.baseWage)}<small>/hr</small></span></div>
-            <div class="rate-row">
-              <span class="rate-label">Weekend</span>
-              ${job.weekendEnabled !== false
-                ? `<span class="rate-val">${Income.formatCurrency(job.baseWage * job.weekendMultiplier)}<small>/hr ×${job.weekendMultiplier}</small></span>`
-                : `<span class="rate-val-off">Same as weekday</span>`}
-            </div>
-            <div class="rate-row">
-              <span class="rate-label">Holiday</span>
-              ${job.holidayEnabled !== false
-                ? `<span class="rate-val">${Income.formatCurrency(job.baseWage * job.holidayMultiplier)}<small>/hr ×${job.holidayMultiplier}</small></span>`
-                : `<span class="rate-val-off">Same as weekday</span>`}
-            </div>
-          </div>
-          <div class="job-card-stats">
-            <span>${agg.count} shifts</span>
-            <span>${Income.formatHours(agg.hours)}</span>
-            <span class="accent-gold">${Income.formatCurrency(agg.gross)}</span>
-          </div>
+        <div class="item item-static item-tpl">
+          <span class="dot" style="background:${_esc(job?.color || '#94a3b8')}"></span>
+          <span class="item-main">
+            <span class="item-title">${_esc(tpl.name)}</span>
+            <span class="item-sub">${_esc(job ? job.name : 'Deleted job')} · ${days} · ${tpl.startTime}–${tpl.endTime}</span>
+          </span>
+          <span class="item-actions">
+            <select class="input input-xs tpl-month-sel" data-id="${tpl.id}" aria-label="Month">${monthOptions}</select>
+            <button class="btn btn-ghost btn-sm tpl-apply-btn" data-id="${tpl.id}" ${job ? '' : 'disabled'}>Fill</button>
+            <button class="icon-btn tpl-delete-btn" data-id="${tpl.id}" aria-label="Delete"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+          </span>
         </div>`;
     }).join('');
   }
 
-  /* ════════════════════════════════════════════
-     TEMPLATES VIEW
-  ════════════════════════════════════════════ */
-  function _renderTemplates() {
-    const templates = Storage.getTemplates();
-    const jobs      = Storage.getJobs();
-    const jobMap    = new Map(jobs.map(j => [j.id, j]));
-    const list      = document.getElementById('templatesList');
-    const empty     = document.getElementById('templatesEmpty');
+  function _bindJobs() {
+    $('jobsList').addEventListener('click', e => {
+      const row = e.target.closest('[data-job-id]');
+      if (row) Modals.openJobModal(row.dataset.jobId);
+    });
 
-    if (!list) return;
-
-    if (!templates.length) {
-      list.innerHTML = '';
-      if (empty) empty.style.display = '';
-      return;
-    }
-    if (empty) empty.style.display = 'none';
-
-    const DOW_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    const now = new Date();
-
-    list.innerHTML = `<div class="templates-grid">` + templates.map(tpl => {
-      const job      = jobMap.get(tpl.jobId);
-      const dayNames = (tpl.daysOfWeek || []).map(d => DOW_NAMES[d]).join(', ') || 'No days set';
-      return `
-        <div class="tpl-card">
-          <div class="tpl-card-header" style="border-left:4px solid ${job?.color || '#3B82F6'}">
-            <div>
-              <h3 class="tpl-name">${tpl.name}</h3>
-              <p class="tpl-job">${job ? job.name : 'Unknown job'}</p>
-            </div>
-            <button class="btn btn-sm btn-danger tpl-delete-btn" data-id="${tpl.id}">×</button>
-          </div>
-          <div class="tpl-details">
-            <span>${tpl.startTime} – ${tpl.endTime}</span>
-            <span>Break ${tpl.breakMinutes}min</span>
-            <span>${dayNames}</span>
-          </div>
-          <div class="tpl-apply-row">
-            <select class="sel-sm tpl-month-sel" data-id="${tpl.id}">
-              ${Array.from({length:3},(_,i) => {
-                const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-                const label = d.toLocaleDateString('en-US',{month:'long',year:'numeric'});
-                return `<option value="${d.getFullYear()}-${d.getMonth()}">${label}</option>`;
-              }).join('')}
-            </select>
-            <button class="btn btn-sm btn-secondary tpl-apply-btn" data-id="${tpl.id}">Apply to Month</button>
-          </div>
-        </div>`;
-    }).join('') + `</div>`;
-
-    /* Bind delete and apply buttons */
-    list.querySelectorAll('.tpl-delete-btn').forEach(btn => {
-      btn.addEventListener('click', e => {
-        e.stopPropagation();
-        const id = btn.dataset.id;
-        Modals.showConfirm('Delete Template', 'Remove this template?').then(ok => {
+    $('templatesList').addEventListener('click', e => {
+      const del = e.target.closest('.tpl-delete-btn');
+      if (del) {
+        Modals.showConfirm('Delete repeating shift', 'Remove this pattern? Shifts already added stay on your calendar.').then(ok => {
           if (!ok) return;
-          Storage.deleteTemplate(id);
+          Storage.deleteTemplate(del.dataset.id);
           _renderTemplates();
-          Modals.showToast('Template deleted.', 'info');
+          Modals.showToast('Deleted.', 'info');
         });
-      });
-    });
-
-    list.querySelectorAll('.tpl-apply-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id  = btn.dataset.id;
-        const sel = list.querySelector(`.tpl-month-sel[data-id="${id}"]`);
-        const [yr, mo] = sel.value.split('-').map(Number);
-        const count = Storage.applyTemplate(id, yr, mo);
-        refresh();
-        Modals.showToast(`${count} shift${count !== 1 ? 's' : ''} added to calendar.`, 'success');
-      });
-    });
-  }
-
-  /* ════════════════════════════════════════════
-     TAX & FEES VIEW
-  ════════════════════════════════════════════ */
-  const CATEGORY_LABELS = {
-    tax:       { icon: '🧾', label: 'Income Tax'   },
-    insurance: { icon: '🏥', label: 'Insurance'    },
-    transport: { icon: '🚃', label: 'Transport'    },
-    custom:    { icon: '➕', label: 'Custom Fees'  },
-  };
-
-  function _renderTax() {
-    const tax = Storage.getTaxSettings();
-
-    const master = document.getElementById('taxEnabled');
-    if (master) master.checked = tax.enabled;
-
-    const list = document.getElementById('taxItemsList');
-    if (!list) return;
-
-    /* Group items by category */
-    const grouped = {};
-    (tax.items || []).forEach(item => {
-      const cat = item.category || 'custom';
-      if (!grouped[cat]) grouped[cat] = [];
-      grouped[cat].push(item);
-    });
-
-    const catOrder = ['tax','insurance','transport','custom'];
-    const disabled = !tax.enabled;
-
-    list.innerHTML = catOrder
-      .filter(cat => grouped[cat]?.length)
-      .map(cat => {
-        const catInfo = CATEGORY_LABELS[cat] || { icon:'•', label: cat };
-        return `
-          <div class="tax-category">
-            <div class="tax-cat-header">${catInfo.icon} ${catInfo.label}</div>
-            ${grouped[cat].map(item => _renderTaxItem(item, disabled)).join('')}
-          </div>`;
-      }).join('') + `
-      <div class="tax-add-row">
-        <button class="btn btn-sm btn-ghost" id="addTaxItemBtn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Add Custom Fee
-        </button>
-      </div>
-      <div class="add-tax-form" id="addTaxForm" style="display:none">
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Name (Japanese)</label>
-            <input type="text" id="newTaxLabel" class="form-control" placeholder="e.g. 自転車代">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Name (English)</label>
-            <input type="text" id="newTaxLabelEn" class="form-control" placeholder="e.g. Bicycle Fee">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Category</label>
-            <select id="newTaxCategory" class="form-control">
-              <option value="transport">Transport</option>
-              <option value="custom">Custom</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Monthly Amount (¥)</label>
-            <input type="number" id="newTaxAmount" class="form-control" placeholder="0" min="0" step="100">
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;padding:0 20px 16px">
-          <button class="btn btn-sm btn-ghost" id="cancelAddTaxBtn">Cancel</button>
-          <button class="btn btn-sm btn-primary" id="confirmAddTaxBtn">Add Fee</button>
-        </div>
-      </div>`;
-
-    _updateTaxPreview(tax);
-    _bindTaxItemEvents();
-  }
-
-  function _renderTaxItem(item, masterDisabled) {
-    const dis = masterDisabled || !item.enabled;
-    const displayLabel = item.label + (item.labelEn ? ` <small>(${item.labelEn})</small>` : '');
-    return `
-      <div class="tax-item${masterDisabled ? ' disabled' : ''}">
-        <div class="tax-item-left">
-          <label class="toggle">
-            <input type="checkbox" class="tax-toggle" data-id="${item.id}"
-                   ${item.enabled ? 'checked' : ''} ${masterDisabled ? 'disabled' : ''}>
-            <span class="toggle-slider"></span>
-          </label>
-          <span class="tax-item-label">${displayLabel}</span>
-        </div>
-        <div class="tax-item-right">
-          <span class="input-prefix-yen">¥</span>
-          <input type="number" class="form-control tax-amount-input" data-id="${item.id}"
-                 value="${item.monthlyAmount || 0}" min="0" step="100"
-                 ${dis ? 'disabled' : ''}>
-          <span class="rate-pct">/mo</span>
-          ${item.removable ? `<button class="tax-remove-btn" data-id="${item.id}" title="Remove">×</button>` : ''}
-        </div>
-      </div>`;
-  }
-
-  function _bindTaxItemEvents() {
-    const list = document.getElementById('taxItemsList');
-    if (!list) return;
-
-    /* Toggle individual item */
-    list.querySelectorAll('.tax-toggle').forEach(cb => {
-      cb.addEventListener('change', () => {
-        Storage.updateTaxItem(cb.dataset.id, { enabled: cb.checked });
-        const amtEl = list.querySelector(`.tax-amount-input[data-id="${cb.dataset.id}"]`);
-        if (amtEl) amtEl.disabled = !cb.checked;
-        _updateTaxPreview();
-      });
-    });
-
-    /* Edit amount */
-    list.querySelectorAll('.tax-amount-input').forEach(inp => {
-      inp.addEventListener('input', () => {
-        Storage.updateTaxItem(inp.dataset.id, { monthlyAmount: parseInt(inp.value) || 0 });
-        _updateTaxPreview();
-      });
-    });
-
-    /* Remove item */
-    list.querySelectorAll('.tax-remove-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        Storage.removeTaxItem(btn.dataset.id);
-        _renderTax();
-      });
-    });
-
-    /* Add custom fee toggle */
-    document.getElementById('addTaxItemBtn')?.addEventListener('click', () => {
-      const form = document.getElementById('addTaxForm');
-      if (form) form.style.display = form.style.display === 'none' ? '' : 'none';
-    });
-    document.getElementById('cancelAddTaxBtn')?.addEventListener('click', () => {
-      document.getElementById('addTaxForm').style.display = 'none';
-    });
-    document.getElementById('confirmAddTaxBtn')?.addEventListener('click', () => {
-      const label   = document.getElementById('newTaxLabel')?.value.trim();
-      const labelEn = document.getElementById('newTaxLabelEn')?.value.trim();
-      const cat     = document.getElementById('newTaxCategory')?.value || 'custom';
-      const amount  = parseInt(document.getElementById('newTaxAmount')?.value) || 0;
-      if (!label) { Modals.showToast('Please enter a name.', 'error'); return; }
-      Storage.addTaxItem({ label, labelEn, category: cat, monthlyAmount: amount });
-      _renderTax();
-      Modals.showToast('Fee added!', 'success');
-    });
-  }
-
-  function _updateTaxPreview(tax) {
-    tax = tax || Storage.getTaxSettings();
-    const now   = new Date();
-    const month = Income.getMonth(now.getFullYear(), now.getMonth(), tax);
-    const bd    = Income.calcTaxBreakdown(tax);
-
-    const previewEl = document.getElementById('taxPreview');
-    if (!previewEl) return;
-
-    const catIcons = { tax:'🧾', insurance:'🏥', transport:'🚃', custom:'➕' };
-
-    previewEl.innerHTML = `
-      <div class="tax-preview-rows">
-        <div class="tax-preview-row">
-          <span>Gross (this month)</span>
-          <strong>${Income.formatCurrency(month.gross)}</strong>
-        </div>
-        ${bd.lines.map(l => `
-          <div class="tax-preview-row deduction">
-            <span>${catIcons[l.category] || '•'} ${l.label}</span>
-            <strong>−${Income.formatCurrency(l.amount)}</strong>
-          </div>`).join('')}
-        ${bd.lines.length === 0 && tax.enabled ? `
-          <div class="tax-preview-hint">Enable items above and enter monthly amounts</div>` : ''}
-        <div class="tax-preview-divider"></div>
-        <div class="tax-preview-row total">
-          <span>Net Income</span>
-          <strong class="accent-green">${Income.formatCurrency(month.net)}</strong>
-        </div>
-      </div>`;
-
-    if (bd.lines.length) ChartsView.renderTaxDonut('taxDonut', bd);
-  }
-
-  /* ════════════════════════════════════════════
-     PROFILE VIEW
-  ════════════════════════════════════════════ */
-  function _renderProfile() {
-    const p     = Storage.getProfile();
-    const goals = Storage.getGoals();
-
-    const nameEl     = document.getElementById('profileName');
-    const colorEl    = document.getElementById('profileAvatarColor');
-    const goalEl     = document.getElementById('monthlyGoalInput');
-    const avatarEl   = document.getElementById('profileAvatarLarge');
-    const dispNameEl = document.getElementById('profileDisplayName');
-    const dispAppEl  = document.getElementById('profileAppNameDisplay');
-
-    if (nameEl)     nameEl.value       = p.name || '';
-    if (colorEl)    colorEl.value      = p.avatarColor || '#3B82F6';
-    if (goalEl)     goalEl.value       = goals.monthlyGross || '';
-    if (avatarEl)   {
-      avatarEl.textContent  = p.name ? p.name[0].toUpperCase() : '?';
-      avatarEl.style.background = p.name
-        ? `linear-gradient(135deg, ${p.avatarColor || '#3B82F6'}, #6366f1)`
-        : 'linear-gradient(135deg, #3B82F6, #6366f1)';
-    }
-    if (dispNameEl) dispNameEl.textContent = p.name || 'Your Profile';
-    if (dispAppEl)  dispAppEl.textContent  = 'ShiftPay — Income Tracker';
-
-    const now     = new Date();
-    const month   = Income.getMonth(now.getFullYear(), now.getMonth(), Storage.getTaxSettings());
-    const goalAmt = goals.monthlyGross || 0;
-    const prevEl  = document.getElementById('goalPreview');
-    if (prevEl && goalAmt > 0) {
-      const pct = Math.min(100, Math.round((month.gross / goalAmt) * 100));
-      prevEl.innerHTML = `
-        <div class="goal-mini-preview">
-          <div class="goal-mini-bar"><div style="width:${pct}%;background:var(--accent-blue);height:100%;border-radius:3px;transition:width .6s ease"></div></div>
-          <p style="font-size:12px;color:var(--text-muted);margin-top:6px">${Income.formatCurrency(month.gross)} of ${Income.formatCurrency(goalAmt)} this month (${pct}%)</p>
-        </div>`;
-    } else if (prevEl) {
-      prevEl.innerHTML = '';
-    }
-  }
-
-  function _bindProfileEvents() {
-    document.getElementById('saveProfileBtn')?.addEventListener('click', () => {
-      const p = {
-        name:        document.getElementById('profileName')?.value.trim() || '',
-        avatarColor: document.getElementById('profileAvatarColor')?.value || '#3B82F6',
-      };
-      Storage.saveProfile(p);
-      _updateAppBranding();
-      _renderProfile();
-      Modals.showToast('Profile saved!', 'success');
-    });
-
-    document.getElementById('saveGoalBtn')?.addEventListener('click', () => {
-      const goal = parseInt(document.getElementById('monthlyGoalInput')?.value) || 0;
-      Storage.saveGoals({ monthlyGross: goal });
-      _renderProfile();
-      Modals.showToast('Goal saved!', 'success');
-    });
-
-    /* Live avatar preview */
-    document.getElementById('profileAvatarColor')?.addEventListener('input', e => {
-      const av = document.getElementById('profileAvatarLarge');
-      if (av) av.style.background = e.target.value;
-    });
-    document.getElementById('profileName')?.addEventListener('input', e => {
-      const av = document.getElementById('profileAvatarLarge');
-      if (av) av.textContent = e.target.value ? e.target.value[0].toUpperCase() : '?';
-    });
-  }
-
-  /* ════════════════════════════════════════════
-     APP BRANDING (sidebar)
-  ════════════════════════════════════════════ */
-  function _updateAppBranding() {
-    const p = Storage.getProfile();
-    const avatarEl = document.getElementById('sidebarAvatar');
-    const spNameEl = document.getElementById('sidebarProfileName');
-
-    if (avatarEl) {
-      if (p.name) {
-        avatarEl.textContent   = p.name[0].toUpperCase();
-        avatarEl.style.background = `linear-gradient(135deg, ${p.avatarColor || '#3B82F6'}, #6366f1)`;
-      } else {
-        avatarEl.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
-        avatarEl.style.background = 'linear-gradient(135deg, #3B82F6, #6366f1)';
+        return;
       }
-    }
-    if (spNameEl) spNameEl.textContent = p.name || 'My Profile';
+      const apply = e.target.closest('.tpl-apply-btn');
+      if (apply) {
+        const sel = $('templatesList').querySelector(`.tpl-month-sel[data-id="${apply.dataset.id}"]`);
+        const [yr, mo] = sel.value.split('-').map(Number);
+        const count = Storage.applyTemplate(apply.dataset.id, yr, mo);
+        refresh();
+        Modals.showToast(count ? `${plural(count, 'shift')} added.` : 'Nothing new to add — those days are already filled.', count ? 'success' : 'info');
+      }
+    });
+
+    $('addJobBtn').addEventListener('click',  () => Modals.openJobModal(null));
+    $('addJobBtn2').addEventListener('click', () => Modals.openJobModal(null));
+    $('addTemplateBtn').addEventListener('click', () => {
+      if (!Storage.getJobs().length) { Modals.showToast('Add a job first.', 'info'); return; }
+      Modals.openTemplateModal();
+    });
   }
 
   /* ════════════════════════════════════════════
-     SETTINGS VIEW
+     SETTINGS
   ════════════════════════════════════════════ */
   function _renderSettings() {
-    const jobs   = Storage.getJobs();
-    const shifts = Storage.getShifts();
-    const el     = document.getElementById('dataStats');
-    if (el) el.textContent = `${jobs.length} job${jobs.length !== 1 ? 's' : ''} · ${shifts.length} shift${shifts.length !== 1 ? 's' : ''}`;
+    const profile = Storage.getProfile();
+    const goals   = Storage.getGoals();
+    $('profileName').value      = profile.name || '';
+    $('monthlyGoalInput').value = goals.monthlyGross || '';
+    $('yearlyLimitInput').value = goals.yearlyLimit  || '';
+    _markLimitPreset(goals.yearlyLimit);
+
+    _renderTax();
+
+    Reports.refreshSelectors();
+    Reports.render();
+
+    const jobs = Storage.getJobs().length, shifts = Storage.getShifts().length;
+    $('dataStats').textContent = `${plural(jobs, 'job')} · ${plural(shifts, 'shift')} · saved in this browser`;
+
+    $('darkModeToggle').checked = document.documentElement.dataset.theme === 'dark';
+    $('aboutLine').textContent  = `ShiftPay v${typeof APP_VERSION !== 'undefined' ? APP_VERSION : ''} · 🦝 AkihiroLabs`;
+  }
+
+  function _markLimitPreset(value) {
+    document.querySelectorAll('#limitPresets .chip').forEach(c =>
+      c.classList.toggle('active', Number(c.dataset.limit) === (Number(value) || 0)));
   }
 
   function _bindSettings() {
-    document.getElementById('exportDataBtn')?.addEventListener('click', () => {
-      const blob = new Blob([JSON.stringify(Storage.exportAll(), null, 2)], { type:'application/json' });
-      const url  = URL.createObjectURL(blob);
-      const a    = Object.assign(document.createElement('a'), { href:url, download:`shiftpay-backup-${new Date().toISOString().slice(0,10)}.json` });
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      Modals.showToast('Backup exported!', 'success');
+    /* Profile & goals — save on change */
+    $('profileName').addEventListener('change', e => {
+      Storage.saveProfile({ ...Storage.getProfile(), name: e.target.value.trim() });
+      _setTitle();
+      Modals.showToast('Saved.', 'success');
+    });
+    $('monthlyGoalInput').addEventListener('change', e => {
+      Storage.saveGoals({ monthlyGross: Math.max(0, parseInt(e.target.value) || 0) });
+      Modals.showToast('Goal saved.', 'success');
+    });
+    $('yearlyLimitInput').addEventListener('change', e => {
+      const v = Math.max(0, parseInt(e.target.value) || 0);
+      Storage.saveGoals({ yearlyLimit: v });
+      _markLimitPreset(v);
+      Modals.showToast('Limit saved.', 'success');
+    });
+    $('limitPresets').addEventListener('click', e => {
+      const chip = e.target.closest('.chip');
+      if (!chip) return;
+      const v = Number(chip.dataset.limit) || 0;
+      Storage.saveGoals({ yearlyLimit: v });
+      $('yearlyLimitInput').value = v || '';
+      _markLimitPreset(v);
+      Modals.showToast(v ? `Limit set to ${yen(v)}.` : 'Limit turned off.', 'success');
     });
 
-    document.getElementById('importFile')?.addEventListener('change', e => {
+    /* Tax master switch */
+    $('taxEnabled').addEventListener('change', e => {
+      Storage.saveTaxSettings({ ...Storage.getTaxSettings(), enabled: e.target.checked });
+      _renderTax();
+    });
+
+    /* Tax list — delegated events */
+    const list = $('taxItemsList');
+    list.addEventListener('change', e => {
+      if (e.target.matches('.tax-toggle')) {
+        Storage.updateTaxItem(e.target.dataset.id, { enabled: e.target.checked });
+        _renderTax();
+      }
+    });
+    list.addEventListener('input', e => {
+      if (e.target.matches('.tax-amount-input')) {
+        Storage.updateTaxItem(e.target.dataset.id, { monthlyAmount: parseInt(e.target.value) || 0 });
+        _updateTaxTotal();
+      }
+    });
+    list.addEventListener('click', e => {
+      const rm = e.target.closest('.tax-remove-btn');
+      if (rm) { Storage.removeTaxItem(rm.dataset.id); _renderTax(); return; }
+      if (e.target.closest('#confirmAddTaxBtn')) {
+        const label  = $('newTaxLabel').value.trim();
+        const amount = parseInt($('newTaxAmount').value) || 0;
+        if (!label) { Modals.showToast('Enter a name for the fee.', 'error'); return; }
+        Storage.addTaxItem({ label, category: 'custom', monthlyAmount: amount });
+        _renderTax();
+        Modals.showToast('Fee added.', 'success');
+      }
+    });
+
+    /* Data */
+    $('exportDataBtn').addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify(Storage.exportAll(), null, 2)], { type: 'application/json' });
+      const url  = URL.createObjectURL(blob);
+      const a    = Object.assign(document.createElement('a'), { href: url, download: `shiftpay-backup-${new Date().toISOString().slice(0, 10)}.json` });
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      Modals.showToast('Backup downloaded.', 'success');
+    });
+
+    $('importFile').addEventListener('change', e => {
       const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
       reader.onload = ev => {
-        try { Storage.importAll(JSON.parse(ev.target.result)); refresh(); Modals.showToast('Data imported!', 'success'); }
-        catch { Modals.showToast('Import failed — invalid file.', 'error'); }
+        try { Storage.importAll(JSON.parse(ev.target.result)); _initTheme(); refresh(); Modals.showToast('Backup restored.', 'success'); }
+        catch { Modals.showToast('Import failed — not a ShiftPay backup file.', 'error'); }
       };
       reader.readAsText(file);
       e.target.value = '';
     });
 
-    document.getElementById('loadSampleBtn')?.addEventListener('click', () => {
-      Modals.showConfirm('Load Sample Data', 'This will overwrite your current data. Continue?').then(ok => {
+    $('loadSampleBtn').addEventListener('click', () => {
+      Modals.showConfirm('Load demo data', 'This replaces your current jobs and shifts with sample data. Continue?').then(ok => {
         if (!ok) return;
         Storage.loadSampleData();
         refresh();
-        Modals.showToast('Sample data loaded!', 'success');
+        Modals.showToast('Demo data loaded.', 'success');
       });
     });
 
-    document.getElementById('clearDataBtn')?.addEventListener('click', () => {
-      Modals.showConfirm('Clear All Data', 'Permanently delete all shifts, jobs, and settings?').then(ok => {
+    $('clearDataBtn').addEventListener('click', () => {
+      Modals.showConfirm('Clear all data', 'Permanently delete all jobs, shifts and fees? This cannot be undone.').then(ok => {
         if (!ok) return;
         Storage.clearAll();
         refresh();
         Modals.showToast('All data cleared.', 'info');
       });
     });
+
+    /* Appearance */
+    $('darkModeToggle').addEventListener('change', e => {
+      const theme = e.target.checked ? 'dark' : 'light';
+      _applyTheme(theme);
+      _saveSetting({ theme });
+      ChartsView.destroyAll();
+      if ($('homeDetails').open && _view === 'home') _renderDetails();
+    });
+  }
+
+  /* ── Tax & fees list ── */
+  function _renderTax() {
+    const tax  = Storage.getTaxSettings();
+    const on   = !!tax.enabled;
+    const list = $('taxItemsList');
+    $('taxEnabled').checked = on;
+    list.classList.toggle('is-off', !on);
+
+    list.innerHTML = (tax.items || []).map(item => `
+      <div class="tax-item">
+        <label class="switch switch-sm">
+          <input type="checkbox" class="tax-toggle" data-id="${item.id}" ${item.enabled ? 'checked' : ''} ${on ? '' : 'disabled'}>
+          <span class="switch-track"></span>
+        </label>
+        <span class="tax-name">${_esc(item.label)}${item.labelEn ? ` <small>${_esc(item.labelEn)}</small>` : ''}</span>
+        <span class="input-yen">
+          <input type="number" class="input input-xs tax-amount-input" data-id="${item.id}"
+                 value="${item.monthlyAmount || 0}" min="0" step="100" ${on && item.enabled ? '' : 'disabled'} aria-label="${_esc(item.label)} per month">
+        </span>
+        ${item.removable
+          ? `<button class="icon-btn tax-remove-btn" data-id="${item.id}" aria-label="Remove"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>`
+          : `<span class="icon-spacer"></span>`}
+      </div>`).join('') + (on ? `
+      <div class="tax-add">
+        <input type="text" id="newTaxLabel" class="input" placeholder="Add a fee, e.g. 自転車代">
+        <span class="input-yen"><input type="number" id="newTaxAmount" class="input input-xs" placeholder="0" min="0" step="100"></span>
+        <button class="btn btn-ghost btn-sm" id="confirmAddTaxBtn">Add</button>
+      </div>` : '');
+
+    _updateTaxTotal();
+  }
+
+  function _updateTaxTotal() {
+    const tax   = Storage.getTaxSettings();
+    const total = Income.calcMonthlyDeductions(tax);
+    $('taxTotal').textContent = tax.enabled ? `Total ${yen(total)} / month` : '';
   }
 
   /* ════════════════════════════════════════════
      THEME
   ════════════════════════════════════════════ */
   function _initTheme() {
-    _applyTheme(Storage.getSettings().theme || 'dark');
+    _applyTheme(Storage.getSettings().theme || 'light');
   }
 
   function _applyTheme(theme) {
     document.documentElement.dataset.theme = theme;
-    const sun  = document.getElementById('iconSun');
-    const moon = document.getElementById('iconMoon');
-    const lbl  = document.getElementById('themeLabel');
-    if (theme === 'dark') {
-      if (sun)  sun.style.display  = '';
-      if (moon) moon.style.display = 'none';
-      if (lbl)  lbl.textContent    = 'Light Mode';
-    } else {
-      if (sun)  sun.style.display  = 'none';
-      if (moon) moon.style.display = '';
-      if (lbl)  lbl.textContent    = 'Dark Mode';
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#0F1115' : '#1E3A8A');
+  }
+
+  /* ════════════════════════════════════════════
+     GLOBAL BINDINGS
+  ════════════════════════════════════════════ */
+  function _openAddShift() {
+    if (!Storage.getJobs().length) {
+      Modals.showToast('Add a job first — then you can log shifts.', 'info');
+      Modals.openJobModal(null);
+      return;
     }
+    Modals.openShiftModal(null);
   }
 
-  function _toggleTheme() {
-    const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-    _applyTheme(next);
-    Storage.saveSettings({ theme: next });
-    ChartsView.destroyAll();
-    setTimeout(() => {
-      if (_view === 'dashboard') _renderDashboard();
-      if (_view === 'reports')   Reports.render();
-      if (_view === 'tax')       _renderTax();
-    }, 30);
-  }
-
-  /* ════════════════════════════════════════════
-     YEAR SELECTORS
-  ════════════════════════════════════════════ */
-  function _initYearSelectors() {
-    // Charts removed — nothing to initialise
-  }
-
-  /* ════════════════════════════════════════════
-     NAV + GLOBAL BINDINGS
-  ════════════════════════════════════════════ */
   function _bindNav() {
-    /* Sidebar links */
-    document.querySelectorAll('.nav-link').forEach(link => {
+    document.querySelectorAll('.nav-link, .tab[data-view]').forEach(link => {
       link.addEventListener('click', e => { e.preventDefault(); navigateTo(link.dataset.view); });
     });
-
-    /* Mobile bottom nav */
-    document.querySelectorAll('.mbn-item[data-view]').forEach(link => {
-      link.addEventListener('click', e => { e.preventDefault(); navigateTo(link.dataset.view); });
+    document.querySelector('.tab[data-action="addShift"]').addEventListener('click', e => {
+      e.preventDefault(); _openAddShift();
     });
-    document.querySelector('.mbn-item[data-action="addShift"]')?.addEventListener('click', e => {
-      e.preventDefault(); Modals.openShiftModal(null);
-    });
-
-    /* Profile chip in sidebar */
-    document.getElementById('sidebarProfileChip')?.addEventListener('click', e => {
-      e.preventDefault(); navigateTo('profile');
-    });
-
-    /* Card quick-nav links */
     document.querySelectorAll('[data-nav]').forEach(el => {
       el.addEventListener('click', () => navigateTo(el.dataset.nav));
     });
+    $('addShiftBtn').addEventListener('click', _openAddShift);
 
-    /* Hamburger */
-    document.getElementById('hamburger')?.addEventListener('click', () => {
-      document.getElementById('sidebar')?.classList.toggle('open');
+    /* Home */
+    document.querySelectorAll('.segmented [data-period]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        _period = btn.dataset.period;
+        _saveSetting({ homePeriod: _period });
+        _renderHome();
+      });
     });
-
-    /* Add Shift button */
-    document.getElementById('addShiftBtn')?.addEventListener('click', () => Modals.openShiftModal(null));
-
-    /* Add Job buttons */
-    document.getElementById('addJobBtn')?.addEventListener('click',  () => Modals.openJobModal(null));
-    document.getElementById('addJobBtn2')?.addEventListener('click', () => Modals.openJobModal(null));
-
-    /* Template buttons */
-    document.getElementById('addTemplateBtn')?.addEventListener('click',  () => Modals.openTemplateModal());
-    document.getElementById('addTemplateBtn2')?.addEventListener('click', () => Modals.openTemplateModal());
-
-    /* Theme toggles */
-    document.getElementById('themeToggle')?.addEventListener('click',      _toggleTheme);
-    document.getElementById('settingsThemeBtn')?.addEventListener('click', _toggleTheme);
-
-    /* Tax master enable */
-    document.getElementById('taxEnabled')?.addEventListener('change', e => {
-      const tax   = Storage.getTaxSettings();
-      tax.enabled = e.target.checked;
-      Storage.saveTaxSettings(tax);
-      _renderTax();
+    $('homeEmptyBtn').addEventListener('click', _openAddShift);
+    $('recentShiftsList').addEventListener('click', e => {
+      const row = e.target.closest('[data-shift-id]');
+      if (row) Modals.openShiftModal(null, row.dataset.shiftId);
     });
-
-    /* Topbar date */
-    const dateEl = document.getElementById('currentDate');
-    if (dateEl) dateEl.textContent = new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+    $('homeDetails').addEventListener('toggle', () => {
+      if ($('homeDetails').open) _renderDetails();
+    });
   }
 
   /* ════════════════════════════════════════════
      GLOBAL REFRESH
   ════════════════════════════════════════════ */
   function refresh() {
-    _updateAppBranding();
-    _initYearSelectors();
     if (_calendarReady) CalendarView.refresh();
-    if (_view === 'dashboard') _renderDashboard();
-    if (_view === 'jobs')      _renderJobs();
-    if (_view === 'templates') _renderTemplates();
-    if (_view === 'reports')   { Reports.refreshSelectors(); Reports.render(); }
-    if (_view === 'tax')       _renderTax();
-    if (_view === 'settings')  _renderSettings();
-    if (_view === 'profile')   _renderProfile();
+    _setTitle();
+    _renderView(_view);
   }
 
   /* ════════════════════════════════════════════
@@ -805,14 +631,15 @@ const App = (() => {
   ════════════════════════════════════════════ */
   function init() {
     _initTheme();
-    _updateAppBranding();
+    const saved = Storage.getSettings().homePeriod;
+    if (['week', 'month', 'year'].includes(saved)) _period = saved;
+
     _bindNav();
-    _bindProfileEvents();
+    _bindJobs();
     _bindSettings();
-    _initYearSelectors();
     Modals.init();
     Reports.init();
-    _renderDashboard();
+    navigateTo('home');
   }
 
   return { init, refresh, navigateTo };
