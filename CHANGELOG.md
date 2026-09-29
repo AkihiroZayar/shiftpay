@@ -3,6 +3,11 @@
 All notable changes to **ShiftPay** are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] — 2026-09-29
+
+- New app logo in the AkihiroLabs family style (navy base, white symbol, green accent): `app-icon.png`, `favicon.png`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`.
+- The page now has a favicon and a home-screen icon.
+
 ## [1.2.0] — 2026-09-28
 
 Minimalist redesign — same data, cleaner layout.
