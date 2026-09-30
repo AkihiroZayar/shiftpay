@@ -631,6 +631,10 @@ const App = (() => {
   ════════════════════════════════════════════ */
   function init() {
     _initTheme();
+    /* AkihiroLabs Discord links */
+    document.querySelectorAll('[data-discord]').forEach(a => {
+      a.href = typeof DISCORD_URL !== 'undefined' ? DISCORD_URL : '#';
+    });
     const saved = Storage.getSettings().homePeriod;
     if (['week', 'month', 'year'].includes(saved)) _period = saved;
 

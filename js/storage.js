@@ -92,6 +92,8 @@ const Storage = (() => {
       breakMinutes: Number(data.breakMinutes) || 0,
       overrideRate: data.overrideRate ? Number(data.overrideRate) : null,
       overtimeType: data.overtimeType || null,
+      lateNightMode: data.lateNightMode === 'manual' ? 'manual' : 'auto',
+      lateNightMinutes: data.lateNightMode === 'manual' ? (Number(data.lateNightMinutes) || 0) : null,
       notes: data.notes || '',
     };
     const shifts = getShifts();

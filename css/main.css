@@ -1,5 +1,5 @@
 /*!
- * ShiftPay — minimalist theme (v1.2)
+ * ShiftPay — minimalist theme (v1.4)
  * AkihiroLabs brand: navy #1E3A8A · white · charcoal text · cyan #00A8CC accent
  */
 
@@ -545,3 +545,31 @@ input[type=number]::-webkit-inner-spin-button { opacity: .4; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ═══════════ LATE NIGHT (v1.4) ═══════════ */
+.late-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.late-manual { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text-secondary); }
+.late-manual .input { width: 88px; }
+.hint { font-size: 12px; color: var(--text-muted); }
+
+/* ═══════════ DISCORD AD (AkihiroLabs) ═══════════ */
+.discord-ad {
+  display: flex; align-items: center; gap: 14px;
+  margin-top: 24px; padding: 16px;
+  background: var(--accent); color: #fff;
+  border-radius: var(--radius); text-decoration: none;
+}
+.discord-ad:hover { opacity: .95; }
+.discord-ad-emoji { font-size: 28px; line-height: 1; }
+.discord-ad-text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.discord-ad-text strong { font-size: 15px; }
+.discord-ad-text small { font-size: 13px; color: rgba(255,255,255,.85); }
+.discord-ad-btn { background: var(--cyan); color: #fff; flex-shrink: 0; }
+.discord-mini {
+  display: block; margin: auto 12px 8px; padding: 8px 10px;
+  font-size: 13px; font-weight: 500; text-decoration: none;
+  color: var(--accent); background: var(--accent-soft); border-radius: var(--radius-sm);
+}
+.discord-mini + .side-foot { margin-top: 0; }
+[data-theme="dark"] .discord-mini { color: #fff; background: var(--surface-2); }
+[data-theme="dark"] .discord-ad { background: #1E3A8A; }

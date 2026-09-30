@@ -135,7 +135,9 @@ const Modals = (() => {
       document.getElementById('shiftNotes').value         = shift.notes || '';
       const ot = shift.overtimeType || '';
       document.getElementById('shiftIsOvertime').checked  = ot === 'overtime' || ot === 'overtime+latenight';
-      document.getElementById('shiftIsLateNight').checked = ot === 'latenight' || ot === 'overtime+latenight';
+      _setLateMode(shift.lateNightMode === 'manual' ? 'manual' : 'auto');
+      document.getElementById('shiftLateHours').value = shift.lateNightMode === 'manual'
+        ? +((Number(shift.lateNightMinutes) || 0) / 60).toFixed(2) : 0;
       document.getElementById('deleteShiftBtn').hidden = false;
     } else {
       /* ─ Add mode ─ */
@@ -144,11 +146,12 @@ const Modals = (() => {
       document.getElementById('shiftJobId').value         = jobs.length ? jobs[0].id : '';
       document.getElementById('shiftStart').value         = '09:00';
       document.getElementById('shiftEnd').value           = '17:00';
-      document.getElementById('shiftBreak').value         = '60';
+      document.getElementById('shiftBreak').value         = '0';
       document.getElementById('shiftOverrideRate').value  = '';
       document.getElementById('shiftNotes').value         = '';
       document.getElementById('shiftIsOvertime').checked  = false;
-      document.getElementById('shiftIsLateNight').checked = false;
+      _setLateMode('auto');
+      document.getElementById('shiftLateHours').value = 0;
       document.getElementById('deleteShiftBtn').hidden = true;
     }
 
@@ -156,6 +159,33 @@ const Modals = (() => {
     modal.classList.add('active');
     _openOverlay();
 
+  }
+
+  /* ── Late night: Auto / Manual ── */
+  function _getLateMode() {
+    const active = document.querySelector('#shiftLateMode button.active');
+    return active?.dataset.mode === 'manual' ? 'manual' : 'auto';
+  }
+
+  function _setLateMode(mode) {
+    document.querySelectorAll('#shiftLateMode button').forEach(b =>
+      b.classList.toggle('active', b.dataset.mode === mode));
+    const manual = mode === 'manual';
+    const wrap = document.getElementById('shiftLateManualWrap');
+    if (wrap) wrap.hidden = !manual;
+    const hint = document.getElementById('shiftLateHint');
+    if (hint) hint.textContent = manual
+      ? 'Enter your late-night hours yourself (e.g. 1 or 1.5).'
+      : 'Counted automatically from your start and end time.';
+  }
+
+  function _lateFields() {
+    const mode = _getLateMode();
+    const hrs  = parseFloat(document.getElementById('shiftLateHours')?.value) || 0;
+    return {
+      lateNightMode:    mode,
+      lateNightMinutes: mode === 'manual' ? Math.max(0, Math.round(hrs * 60)) : null,
+    };
   }
 
   function _closeShiftModal() {
@@ -184,7 +214,6 @@ const Modals = (() => {
     if (!job) { previewEl.hidden = true; return; }
 
     const isOT = document.getElementById('shiftIsOvertime')?.checked;
-    const isLN = document.getElementById('shiftIsLateNight')?.checked;
     const pseudoShift = {
       date: dateStr,
       jobId,
@@ -192,7 +221,8 @@ const Modals = (() => {
       endTime:      end,
       breakMinutes: breakMin,
       overrideRate: override ? Number(override) : null,
-      overtimeType: isOT && isLN ? 'overtime+latenight' : isOT ? 'overtime' : isLN ? 'latenight' : null,
+      overtimeType: isOT ? 'overtime' : null,
+      ..._lateFields(),
     };
 
     const tax     = Storage.getTaxSettings();
@@ -213,6 +243,14 @@ const Modals = (() => {
     document.getElementById('prevHours').textContent      = Income.formatHours(details.workedHours);
     document.getElementById('prevRate').textContent       = Income.formatCurrency(details.rate) + '/hr' + multStr;
     document.getElementById('prevGross').textContent      = Income.formatCurrency(details.gross);
+
+    const lateRow = document.getElementById('prevLateRow');
+    if (lateRow) {
+      lateRow.hidden = !(details.lateNightMinutes > 0);
+      document.getElementById('prevLateHours').textContent =
+        Income.formatHours(details.lateNightMinutes / 60) + (details.lateNightMode === 'manual' ? ' (manual)' : '');
+      document.getElementById('prevLateExtra').textContent = '+' + Income.formatCurrency(details.lateNightExtra);
+    }
 
     const taxRow = document.getElementById('prevTaxRow');
     const netRow = document.getElementById('prevNetRow');
@@ -240,10 +278,8 @@ const Modals = (() => {
       endTime:      document.getElementById('shiftEnd')?.value,
       breakMinutes: parseInt(document.getElementById('shiftBreak')?.value) || 0,
       overrideRate: document.getElementById('shiftOverrideRate')?.value || null,
-      overtimeType: document.getElementById('shiftIsOvertime')?.checked  &&
-                    document.getElementById('shiftIsLateNight')?.checked  ? 'overtime+latenight' :
-                    document.getElementById('shiftIsOvertime')?.checked   ? 'overtime' :
-                    document.getElementById('shiftIsLateNight')?.checked  ? 'latenight' : null,
+      overtimeType: document.getElementById('shiftIsOvertime')?.checked ? 'overtime' : null,
+      ..._lateFields(),
       notes:        document.getElementById('shiftNotes')?.value || '',
     };
 
@@ -298,7 +334,10 @@ const Modals = (() => {
     document.getElementById('deleteShiftBtn')?.addEventListener('click', _deleteShift);
 
     /* Live preview on any field change */
-    const previewFields = ['shiftDate','shiftJobId','shiftStart','shiftEnd','shiftBreak','shiftOverrideRate','shiftIsOvertime','shiftIsLateNight'];
+    document.querySelectorAll('#shiftLateMode button').forEach(b =>
+      b.addEventListener('click', () => { _setLateMode(b.dataset.mode); _updateShiftPreview(); }));
+
+    const previewFields = ['shiftDate','shiftJobId','shiftStart','shiftEnd','shiftBreak','shiftOverrideRate','shiftIsOvertime','shiftLateHours'];
     previewFields.forEach(id => {
       const el = document.getElementById(id);
       if (!el) return;
@@ -563,7 +602,7 @@ const Modals = (() => {
     document.getElementById('tplName').value  = '';
     document.getElementById('tplStart').value = '09:00';
     document.getElementById('tplEnd').value   = '17:00';
-    document.getElementById('tplBreak').value = '60';
+    document.getElementById('tplBreak').value = '0';
     document.querySelectorAll('#tplDays input[type=checkbox]').forEach(cb => cb.checked = false);
 
     modal.classList.add('active');

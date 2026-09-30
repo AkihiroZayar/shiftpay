@@ -33,6 +33,45 @@ const Income = (() => {
     return Math.max(0, diff - breakMinutes);
   }
 
+  /* ── Late-night (深夜) minutes ──
+     Auto: counts only the minutes inside 22:00–05:00.
+     Break comes out of normal (day) minutes first; late-night minutes are
+     only reduced when the break is longer than the normal part of the shift.
+     Manual: user-entered late-night minutes (capped at worked minutes). */
+  const LATE_WINDOWS = [[0, 5 * 60], [22 * 60, 29 * 60], [46 * 60, 53 * 60]];
+
+  function calcLateNightMinutes(shift) {
+    const startMin = timeToMinutes(shift.startTime);
+    let   endMin   = timeToMinutes(shift.endTime);
+    if (endMin <= startMin) endMin += 24 * 60; // overnight / ends at 24:00
+    const rawMin   = endMin - startMin;
+    const breakMin = Number(shift.breakMinutes) || 0;
+    const workedMin = Math.max(0, rawMin - breakMin);
+
+    if (getLateNightMode(shift) === 'manual') {
+      const manual = Math.round(Number(shift.lateNightMinutes) || 0);
+      return Math.max(0, Math.min(manual, workedMin));
+    }
+
+    let lateRaw = 0;
+    LATE_WINDOWS.forEach(([ws, we]) => {
+      lateRaw += Math.max(0, Math.min(endMin, we) - Math.max(startMin, ws));
+    });
+    const normalRaw = rawMin - lateRaw;
+    const breakFromLate = Math.max(0, breakMin - normalRaw);
+    return Math.max(0, Math.min(lateRaw - breakFromLate, workedMin));
+  }
+
+  /* 'auto' (default, also for shifts saved before v1.4) or 'manual' */
+  function getLateNightMode(shift) {
+    return shift.lateNightMode === 'manual' ? 'manual' : 'auto';
+  }
+
+  function hasOvertimeFlag(shift) {
+    const ot = shift.overtimeType || null;
+    return ot === 'overtime' || ot === 'overtime+latenight';
+  }
+
   /* ── Rate determination ── */
   function getDayType(dateStr) {
     if (JapaneseHolidays.isHoliday(dateStr)) return 'holiday';
@@ -73,13 +112,11 @@ const Income = (() => {
     }
 
     /* Japanese overtime stacked on top — only applies in multiplier/base mode */
-    const ot = shift.overtimeType || null;
+    /* Late night is added per minute in calcShiftDetails, not to the rate */
+    const ot = hasOvertimeFlag(shift) ? 'overtime' : null;
     if (ot && rateMode !== 'fixed') {
-      const base = job.baseWage;
-      if (ot === 'overtime')           multiplier = Math.max(multiplier || 1, 1.25);
-      if (ot === 'latenight')          multiplier = (multiplier || 1) + 0.25;
-      if (ot === 'overtime+latenight') { multiplier = Math.max(multiplier || 1, 1.25); multiplier += 0.25; }
-      rate = base * multiplier;
+      multiplier = Math.max(multiplier || 1, 1.25);
+      rate = job.baseWage * multiplier;
       rateMode = 'multiplier';
     }
 
@@ -101,14 +138,8 @@ const Income = (() => {
     const workedMin = Math.max(0, endMin - startMin - breakMin);
 
     const OVERTIME_LIMIT = 8 * 60;   // 480 min = 8 h
-    const LATE_START     = 22 * 60;  // 22:00
-    const LATE_END       = 29 * 60;  // 05:00 next day
 
-    // Late-night overlap (before break for simplicity)
-    const rawEnd            = endMin;
-    const lateOverlapStart  = Math.max(startMin, LATE_START);
-    const lateOverlapEnd    = Math.min(rawEnd, LATE_END);
-    const lateNightMin      = Math.max(0, lateOverlapEnd - lateOverlapStart);
+    const lateNightMin = calcLateNightMinutes(shift);
 
     // Regular vs overtime
     const regularMin  = Math.min(workedMin, OVERTIME_LIMIT);
@@ -179,13 +210,18 @@ const Income = (() => {
       rate = job.weekendFixedRate;
     }
 
-    /* User-selected overtime / late night ONLY — no auto-detection */
-    const ot = shift.overtimeType || null;
-    if (ot === 'overtime')           rate = Math.max(rate, baseWage * 1.25);
-    if (ot === 'latenight')          rate = rate + baseWage * 0.25;
-    if (ot === 'overtime+latenight') rate = Math.max(rate, baseWage * 1.25) + baseWage * 0.25;
+    /* Overtime: user-selected, applies to the whole shift */
+    const hasOT = hasOvertimeFlag(shift);
+    if (hasOT) rate = Math.max(rate, baseWage * 1.25);
 
-    const gross = workedHours * rate;
+    /* Late night (深夜手当): +25% of base wage, only for late-night minutes */
+    const lateNightMode    = getLateNightMode(shift);
+    const lateNightMinutes = calcLateNightMinutes(shift);
+    const lateNightPremiumRate = baseWage * 0.25;
+    const lateNightExtra   = (lateNightMinutes / 60) * lateNightPremiumRate;
+
+    const baseGross = workedHours * rate;
+    const gross     = baseGross + lateNightExtra;
 
     return {
       workedMinutes: workedMin,
@@ -193,12 +229,18 @@ const Income = (() => {
       rate,
       multiplier: mult,
       dayType,
+      baseGross,
       gross,
       deductions: 0,
       net: gross,
+      lateNightMode,
+      lateNightMinutes,
+      normalMinutes: workedMin - lateNightMinutes,
+      lateNightPremiumRate,
+      lateNightExtra,
       overtimeDetails: {
-        hasOvertime:  ot === 'overtime' || ot === 'overtime+latenight',
-        hasLateNight: ot === 'latenight' || ot === 'overtime+latenight',
+        hasOvertime:  hasOT,
+        hasLateNight: lateNightMinutes > 0,
       },
       isHoliday: dayType === 'holiday',
       isWeekend:  dayType === 'weekend',
@@ -396,6 +438,7 @@ const Income = (() => {
     getAll,
     getProjected,
     getMonthlyBreakdown,
+    calcLateNightMinutes,
     getIncomeByJob,
     calcTaxBreakdown,
     todayKey,
