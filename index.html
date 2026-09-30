@@ -47,6 +47,7 @@
       </a>
     </nav>
 
+    <a class="discord-mini" data-discord href="#" target="_blank" rel="noopener">💬 Join our Discord</a>
     <p class="side-foot">🦝 AkihiroLabs</p>
   </aside>
 
@@ -258,6 +259,15 @@
         </div>
       </section>
 
+      <a class="discord-ad" data-discord href="#" target="_blank" rel="noopener">
+        <span class="discord-ad-emoji" aria-hidden="true">🦝</span>
+        <span class="discord-ad-text">
+          <strong>Join the AkihiroLabs Discord</strong>
+          <small>Updates, feedback and new apps from AkihiroLabs.</small>
+        </span>
+        <span class="btn btn-sm discord-ad-btn">Join</span>
+      </a>
+
       <p class="about" id="aboutLine">ShiftPay · 🦝 AkihiroLabs</p>
     </section>
   </main>
@@ -307,7 +317,7 @@
     <div class="field-row field-row-3">
       <label class="field"><span>Start</span><input type="time" id="shiftStart" class="input" value="09:00" required></label>
       <label class="field"><span>End</span><input type="time" id="shiftEnd" class="input" value="17:00" required></label>
-      <label class="field"><span>Break (min)</span><input type="number" id="shiftBreak" class="input" value="60" min="0" max="480"></label>
+      <label class="field"><span>Break (min)</span><input type="number" id="shiftBreak" class="input" value="0" min="0" max="480"></label>
     </div>
 
     <details class="more">
@@ -315,7 +325,20 @@
       <div class="more-body">
         <div class="check-row">
           <label class="check"><input type="checkbox" id="shiftIsOvertime"><span>Overtime ×1.25</span></label>
-          <label class="check"><input type="checkbox" id="shiftIsLateNight"><span>Late night +25% <small>(22:00–05:00)</small></span></label>
+        </div>
+        <div class="field">
+          <span>Late night +25% <small>(22:00–05:00)</small></span>
+          <div class="late-row">
+            <div class="segmented segmented-sm" id="shiftLateMode" role="group" aria-label="Late night mode">
+              <button type="button" data-mode="auto" class="active">Auto</button>
+              <button type="button" data-mode="manual">Manual</button>
+            </div>
+            <label class="late-manual" id="shiftLateManualWrap" hidden>
+              <input type="number" id="shiftLateHours" class="input" min="0" max="24" step="0.25" value="0" aria-label="Late-night hours">
+              <span>h</span>
+            </label>
+          </div>
+          <small class="hint" id="shiftLateHint">Counted automatically from your start and end time.</small>
         </div>
         <label class="field"><span>Custom hourly rate (¥)</span><input type="number" id="shiftOverrideRate" class="input" placeholder="Use job rate" min="0"></label>
         <label class="field"><span>Notes</span><textarea id="shiftNotes" class="input" rows="2" placeholder="Optional"></textarea></label>
@@ -326,6 +349,7 @@
       <div>
         <span class="estimate-label">Estimated pay</span>
         <span class="estimate-sub"><span id="prevHours"></span> · <span id="prevRate"></span> · <span id="previewDayType"></span></span>
+        <span class="estimate-sub" id="prevLateRow" hidden>🌙 Late night <span id="prevLateHours"></span> · <strong id="prevLateExtra"></strong></span>
         <span class="estimate-sub" id="prevTaxRow" hidden><span></span> <strong id="prevTax"></strong></span>
         <span id="prevNetRow" hidden><strong id="prevNet"></strong></span>
       </div>
@@ -435,7 +459,7 @@
     <div class="field-row field-row-3">
       <label class="field"><span>Start</span><input type="time" id="tplStart" class="input" value="09:00"></label>
       <label class="field"><span>End</span><input type="time" id="tplEnd" class="input" value="17:00"></label>
-      <label class="field"><span>Break (min)</span><input type="number" id="tplBreak" class="input" value="60" min="0"></label>
+      <label class="field"><span>Break (min)</span><input type="number" id="tplBreak" class="input" value="0" min="0"></label>
     </div>
     <div class="field">
       <span>Repeat on</span>

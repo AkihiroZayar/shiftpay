@@ -79,6 +79,8 @@ For demo data, go to **Settings → Data → Load demo** to populate 90 days of 
 
 The shift form shows the estimated pay as you type. Overtime, late night, custom rate and notes are under **More options**.
 
+**Late night (深夜手当):** by default ShiftPay adds +25% only for the hours between 22:00 and 05:00 (e.g. 18:00–24:00 → 2h late night). Switch to **Manual** under More options to type the late-night hours yourself. Break defaults to 0 min.
+
 ## Tax Settings
 
 Go to **Settings → Tax & fees** and turn on the switch. Turn on each line you pay and enter the monthly amount (check your 給与明細). Home then shows your take-home pay for the month.
