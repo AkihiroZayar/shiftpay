@@ -214,7 +214,7 @@ const ShiftCloud = (() => {
             <input class="input input-w" id="codeInput" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="123456" required>
           </label>
           <div class="row row-wrap">
-            <button class="btn btn-sm" type="submit">Sign in</button>
+            <button class="btn btn-primary btn-sm" type="submit">Sign in</button>
             <button class="btn btn-ghost btn-sm" type="button" id="codeBackBtn">Use another email</button>
           </div>
         </form>`;
@@ -241,7 +241,7 @@ const ShiftCloud = (() => {
           <span class="row-label">Email</span>
           <input class="input input-w" id="emailInput" type="email" autocomplete="email" placeholder="you@example.com" required>
         </label>
-        <div class="row"><button class="btn btn-sm" type="submit">Send sign-in email</button></div>
+        <div class="row"><button class="btn btn-primary btn-sm" type="submit">Send sign-in email</button></div>
       </form>`;
     $('emailForm').onsubmit = async e => {
       e.preventDefault();
