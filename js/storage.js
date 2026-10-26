@@ -238,6 +238,7 @@ const Storage = (() => {
 
   function clearAll() {
     [K.JOBS, K.SHIFTS, K.TAX].forEach(k => localStorage.removeItem(k));
+    window.dispatchEvent(new CustomEvent('sp:change', { detail: 'all' }));
     /* Keep settings (theme preference) */
   }
 

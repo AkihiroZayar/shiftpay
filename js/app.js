@@ -498,6 +498,10 @@ const App = (() => {
     });
 
     $('loadSampleBtn').addEventListener('click', () => {
+      if (typeof ShiftCloud !== 'undefined' && ShiftCloud.signedIn) {
+        Modals.showToast('Sign out first — demo data would replace the shifts in your account.', 'info');
+        return;
+      }
       Modals.showConfirm('Load demo data', 'This replaces your current jobs and shifts with sample data. Continue?').then(ok => {
         if (!ok) return;
         Storage.loadSampleData();
@@ -507,7 +511,10 @@ const App = (() => {
     });
 
     $('clearDataBtn').addEventListener('click', () => {
-      Modals.showConfirm('Clear all data', 'Permanently delete all jobs, shifts and fees? This cannot be undone.').then(ok => {
+      const synced = typeof ShiftCloud !== 'undefined' && ShiftCloud.signedIn;
+      Modals.showConfirm('Clear all data', synced
+        ? 'Permanently delete all jobs, shifts and fees from your account and ALL your signed-in devices? This cannot be undone.'
+        : 'Permanently delete all jobs, shifts and fees? This cannot be undone.').then(ok => {
         if (!ok) return;
         Storage.clearAll();
         refresh();
