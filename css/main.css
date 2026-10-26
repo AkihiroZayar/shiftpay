@@ -573,3 +573,6 @@ input[type=number]::-webkit-inner-spin-button { opacity: .4; }
 .discord-mini + .side-foot { margin-top: 0; }
 [data-theme="dark"] .discord-mini { color: #fff; background: var(--surface-2); }
 [data-theme="dark"] .discord-ad { background: #1E3A8A; }
+
+/* PWA install row — hidden until the browser offers install */
+[data-install][hidden] { display: none !important; }
