@@ -20,7 +20,10 @@ const Storage = (() => {
     try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
     catch { return fallback; }
   }
-  function write(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+  function write(key, val) {
+    localStorage.setItem(key, JSON.stringify(val));
+    window.dispatchEvent(new CustomEvent('sp:change', { detail: key }));  // lets push.js re-sync reminders
+  }
 
   function uid() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
