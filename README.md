@@ -5,13 +5,13 @@
 <h1 align="center">ShiftPay — Work Income Tracker</h1>
 
 <p align="center">
-  A minimalist, calendar-based income tracker for part-time workers in Japan. Track shifts across multiple jobs, automatically apply weekend/holiday pay rates, and visualise your monthly earnings — all stored locally in your browser.<br>By AkihiroLabs.
+  A minimalist, calendar-based income tracker for part-time workers in Japan. Track shifts across multiple jobs, automatically apply weekend/holiday pay rates, and visualise your monthly earnings. Works on its own in your browser, with an optional account to sync across devices.<br>By AkihiroLabs.
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.3.0-1E3A8A" alt="version 1.3.0">
+  <img src="https://img.shields.io/badge/version-1.6.0-1E3A8A" alt="version 1.6.0">
   <img src="https://img.shields.io/badge/vanilla-JavaScript-00A8CC" alt="Vanilla JS">
-  <img src="https://img.shields.io/badge/storage-localStorage-1E3A8A" alt="localStorage">
+  <img src="https://img.shields.io/badge/PWA-installable-1E3A8A" alt="PWA">
 </p>
 
 ---
@@ -27,7 +27,9 @@
 - **Export** — Filter by year, month, and job; export to PDF, Excel, or CSV
 - **Details** — Income by job and an income chart, folded away until you need them
 - **Light / Dark mode** — AkihiroLabs light theme by default; dark mode in Settings
-- **100% local** — All data stored in `localStorage`; no server, no account required
+- **Shift reminders** — Web Push notification 15 min – 2 hours before each shift, even when the app is closed
+- **Optional account & sync** — Sign in with an email link (same AkihiroLabs account as ByteBell) to sync across devices; no account needed to use the app
+- **Installable & offline** — Add to your home screen; works without a connection
 
 ---
 
@@ -103,6 +105,10 @@ PDF is landscape A4 with a summary header and full shift table. Excel includes a
 
 Go to **Settings → Data → Export** to download a backup of your jobs, shifts and fees. Restore it later (on the same or a different device) with **Import**.
 
+## Account & Sync
+
+Settings → **Account & sync** → enter your email → tap the link in the email (or type the code, if your email shows one). Your data is uploaded and kept in sync on every device you sign in on. Each job, shift and template syncs separately, so edits on two devices don't overwrite each other (the newest edit of the same item wins). Data is stored in Supabase with row-level security — only you can read it.
+
 ---
 
 ## Libraries Used (CDN)
@@ -114,6 +120,7 @@ Go to **Settings → Data → Export** to download a backup of your jobs, shifts
 | jsPDF + autotable | 2.5.1 / 3.8.2 | PDF export |
 | SheetJS (xlsx) | 0.18.5 | Excel export |
 | Google Fonts | — | Inter |
+| supabase-js | 2.118.0 | Optional account & sync |
 
 No npm, no build toolchain — all dependencies load from CDN.
 

@@ -2,7 +2,7 @@
  * AkihiroLabs — ShiftPay — service worker
  * Bump CACHE whenever you change files so installed apps pick up the update.
  */
-const CACHE = 'shiftpay-v1';
+const CACHE = 'shiftpay-v2';
 const SHELL = [
   './',
   './index.html',
@@ -18,6 +18,7 @@ const SHELL = [
   './js/app.js',
   './js/pwa.js',
   './js/push.js',
+  './js/cloud.js',
   './favicon.png',
   './apple-touch-icon.png',
   './icon-192.png',

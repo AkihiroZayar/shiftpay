@@ -3,6 +3,14 @@
 All notable changes to **ShiftPay** are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.6.0] — 2026-10-26
+
+- **Optional account & sync.** Settings → *Account & sync*: sign in with your AkihiroLabs account (same as ByteBell) using a one-time email link (or code) — no password. Jobs, shifts, templates, fees, profile and goals then sync across all your devices.
+- Your existing data is uploaded on first sign-in; if the same item exists on two devices, the most recently edited copy wins. Deletes sync too.
+- Works offline — changes sync when you're back online, when you open the app, and a moment after each edit.
+- Without signing in, ShiftPay works exactly as before (data stays on this device). Signing out keeps your data on the device.
+- Demo data can't be loaded while signed in (it would replace the shifts in your account).
+
 ## [1.5.0] — 2026-10-26
 
 - **Shift reminders (Web Push).** Settings → *Shift reminders*: get a notification 15 min – 2 hours before each upcoming shift, even when ShiftPay is closed. No account needed. On iPhone, add ShiftPay to the Home Screen first.
