@@ -576,3 +576,22 @@ input[type=number]::-webkit-inner-spin-button { opacity: .4; }
 
 /* PWA install row — hidden until the browser offers install */
 [data-install][hidden] { display: none !important; }
+
+/* ── v1.7: tappable repeating-shift rows, Undo in toasts, language switch ── */
+.item-tpl { flex-wrap: wrap; }
+.tpl-open {
+  flex: 1; min-width: 180px; display: flex; align-items: center; gap: 12px;
+  border: 0; background: none; padding: 4px 6px; margin: -4px -6px; border-radius: var(--radius-sm);
+  text-align: left; color: inherit; font: inherit; cursor: pointer;
+}
+.tpl-open:hover { background: var(--surface); }
+.tpl-edit-icon { width: 16px; height: 16px; flex-shrink: 0; fill: none; stroke: var(--text-muted); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.tpl-open:hover .tpl-edit-icon { stroke: var(--accent); }
+.toast-action {
+  margin-left: 6px; padding: 4px 10px; border-radius: 999px;
+  border: 1px solid currentColor; background: transparent; pointer-events: auto;
+  color: inherit; font: inherit; font-weight: 600; font-size: 13px; cursor: pointer; white-space: nowrap;
+}
+.toast-action:hover { opacity: .8; }
+#langSwitch button { min-width: 72px; }
+.input-code { letter-spacing: .3em; font-variant-numeric: tabular-nums; }
