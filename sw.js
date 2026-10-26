@@ -2,7 +2,7 @@
  * AkihiroLabs — ShiftPay — service worker
  * Bump CACHE whenever you change files so installed apps pick up the update.
  */
-const CACHE = 'shiftpay-v2';
+const CACHE = 'shiftpay-v3';
 const SHELL = [
   './',
   './index.html',
