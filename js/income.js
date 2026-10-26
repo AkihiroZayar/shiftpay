@@ -15,10 +15,10 @@ const Income = (() => {
   }
 
   function formatHours(hoursDecimal) {
-    const h = Math.floor(hoursDecimal);
-    const m = Math.round((hoursDecimal - h) * 60);
-    if (m === 0) return `${h}h`;
-    return `${h}h ${m}m`;
+    let h = Math.floor(hoursDecimal);
+    let m = Math.round((hoursDecimal - h) * 60);
+    if (m === 60) { h += 1; m = 0; }
+    return typeof I18n !== 'undefined' ? I18n.t('hours', { h, m }) : (m ? `${h}h ${m}m` : `${h}h`);
   }
 
   /* ── Time helpers ── */
@@ -362,7 +362,9 @@ const Income = (() => {
       const agg = calcAggregate(Storage.getShiftsForMonth(year, m));
       return {
         month: m,
-        label: MONTH_LABELS[m],
+        label: typeof I18n !== 'undefined'
+          ? new Date(2000, m, 1).toLocaleDateString(I18n.locale, { month: 'short' })
+          : MONTH_LABELS[m],
         ...agg,
         deductions,
         net: agg.gross - deductions,

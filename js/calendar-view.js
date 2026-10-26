@@ -18,7 +18,8 @@ const CalendarView = (() => {
       firstDay: 0,                 // Sunday first (common in Japan UI)
       dayMaxEvents: 2,
       fixedWeekCount: false,
-      noEventsContent: 'No shifts this month',
+      noEventsContent: () => I18n.t('cal.noEvents'),
+      locale: { code: I18n.lang },
       height: 'auto',
       selectable: true,
       eventDisplay: 'block',
@@ -95,7 +96,7 @@ const CalendarView = (() => {
     const titleEl = document.getElementById('calTitle');
     if (!titleEl || !calendar) return;
     const d = calendar.getDate();
-    titleEl.textContent = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    titleEl.textContent = d.toLocaleDateString(I18n.locale, { month: 'long', year: 'numeric' });
   }
 
   /* ── Render all shifts as calendar events ── */
@@ -166,8 +167,8 @@ const CalendarView = (() => {
     const agg    = Income.calcAggregate(shifts);
 
     container.textContent = agg.count
-      ? `${agg.count} shift${agg.count !== 1 ? 's' : ''} · ${Income.formatHours(agg.hours)} · ${Income.formatCurrency(agg.gross)}`
-      : 'No shifts this month — tap a day to add one.';
+      ? `${I18n.t('shifts', { n: agg.count })} · ${Income.formatHours(agg.hours)} · ${Income.formatCurrency(agg.gross)}`
+      : I18n.t('cal.empty');
   }
 
   /* ── Helpers ── */
@@ -178,7 +179,15 @@ const CalendarView = (() => {
     return `${y}-${m}-${d}`;
   }
 
+  /* Language changed: dates, weekday headers and the title follow the new locale */
+  function setLocale() {
+    if (!calendar) return;
+    calendar.setOption('locale', { code: I18n.lang });
+    _updateTitle();
+    _updateMonthStats();
+  }
+
   /* Public API */
-  return { init, refresh };
+  return { init, refresh, setLocale };
 
 })();

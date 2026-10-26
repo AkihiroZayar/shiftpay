@@ -515,7 +515,7 @@ const ChartsView = (() => {
     ctx.fillStyle = c.muted;
     ctx.font = '14px Inter, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('No data for this period', canvas.width / 2, canvas.height / 2);
+    ctx.fillText(I18n.t('chart.noData'), canvas.width / 2, canvas.height / 2);
   }
 
   /* ─────────────────────────────────────────────

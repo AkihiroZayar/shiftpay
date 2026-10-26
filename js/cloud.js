@@ -1,7 +1,7 @@
 /*!
  * AkihiroLabs — ShiftPay — account & sync
  * Optional AkihiroLabs account (same account as ByteBell). Sign in with a
- * one-time email link or code; jobs, shifts, templates, fees, profile and goals then
+ * one-time 6-digit email code; jobs, shifts, templates, fees, profile and goals then
  * sync across devices. Without signing in ShiftPay stays fully local.
  *
  * How sync works: every item is its own row. Each device remembers what it
@@ -28,7 +28,8 @@ const ShiftCloud = (() => {
   let lastError = '';
 
   const $ = id => document.getElementById(id);
-  const toast = (m, t) => (typeof Modals !== 'undefined' && Modals.showToast ? Modals.showToast(m, t) : console.log(m));
+  const t = (k, v) => I18n.t(k, v);
+  const toast = (m, ty) => (typeof Modals !== 'undefined' && Modals.showToast ? Modals.showToast(m, ty) : console.log(m));
   const raw = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
   const hash = d => JSON.stringify(d);
 
@@ -144,7 +145,7 @@ const ShiftCloud = (() => {
       if (pulled && typeof ShiftPush !== 'undefined') ShiftPush.sync().catch(() => {});
     } catch (e) {
       console.error('ShiftPay sync failed:', e);
-      lastError = 'Sync failed — will retry.';
+      lastError = 'acc.syncFailed';
     } finally {
       busy = false;
       render();
@@ -176,7 +177,7 @@ const ShiftCloud = (() => {
     localStorage.removeItem(SYNC_KEY);
     user = null;
     render();
-    toast('Signed out. Your data stays on this device.', 'info');
+    toast(t('acc.signedOut'), 'info');
   }
 
   /* ── Settings → Account block ── */
@@ -185,49 +186,56 @@ const ShiftCloud = (() => {
     if (!box) return;
     const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     if (!sb) {
-      box.innerHTML = `<p class="block-hint">Account sync is unavailable right now (offline?). ShiftPay still works on this device.</p>`;
+      box.innerHTML = `<p class="block-hint">${t('acc.unavailable')}</p>`;
       return;
     }
     if (user) {
       const st = getSync();
-      const when = st?.lastSync ? new Date(st.lastSync).toLocaleString() : 'not yet';
+      const when = st?.lastSync ? new Date(st.lastSync).toLocaleString(I18n.locale) : t('acc.notYet');
       box.innerHTML = `
         <div class="rows">
           <div class="row">
-            <span class="row-label">${esc(user.email)}<small>${lastError ? esc(lastError) : 'Last synced: ' + esc(when)}</small></span>
+            <span class="row-label">${esc(user.email)}<small>${lastError ? esc(t(lastError)) : esc(t('acc.lastSynced', { when }))}</small></span>
             <span class="row-actions">
-              <button class="btn btn-ghost btn-sm" id="syncNowBtn" type="button">Sync now</button>
-              <button class="btn btn-ghost btn-sm" id="signOutBtn" type="button">Sign out</button>
+              <button class="btn btn-ghost btn-sm" id="syncNowBtn" type="button">${t('acc.syncNow')}</button>
+              <button class="btn btn-ghost btn-sm" id="signOutBtn" type="button">${t('acc.signOut')}</button>
             </span>
           </div>
         </div>`;
-      $('syncNowBtn').onclick = () => { sync(); toast('Syncing…', 'info'); };
+      $('syncNowBtn').onclick = () => { sync(); toast(t('acc.syncing'), 'info'); };
       $('signOutBtn').onclick = signOut;
       return;
     }
     if (pendingEmail) {
       box.innerHTML = `
-        <p class="block-hint">We sent a sign-in email to <strong>${esc(pendingEmail)}</strong> (check spam too). Tap the link in it — or, if the email shows a code, enter it below.</p>
+        <p class="block-hint">${t('acc.codeSent', { email: esc(pendingEmail) })}</p>
         <form class="rows" id="codeForm">
           <label class="row">
-            <span class="row-label">Code</span>
-            <input class="input input-w" id="codeInput" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="123456" required>
+            <span class="row-label">${t('acc.code')}</span>
+            <input class="input input-w input-code" id="codeInput" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="123456" required>
           </label>
           <div class="row row-wrap">
-            <button class="btn btn-primary btn-sm" type="submit">Sign in</button>
-            <button class="btn btn-ghost btn-sm" type="button" id="codeBackBtn">Use another email</button>
+            <button class="btn btn-primary btn-sm" type="submit">${t('acc.signIn')}</button>
+            <button class="btn btn-ghost btn-sm" type="button" id="codeResendBtn">${t('acc.resend')}</button>
+            <button class="btn btn-ghost btn-sm" type="button" id="codeBackBtn">${t('acc.anotherEmail')}</button>
           </div>
         </form>`;
       $('codeBackBtn').onclick = () => { pendingEmail = ''; render(); };
+      $('codeResendBtn').onclick = async e => {
+        const btn = e.currentTarget; btn.disabled = true;
+        try { await sendCode(pendingEmail); toast(t('acc.resent'), 'success'); }
+        catch (err) { console.error(err); toast(t(/rate|limit|seconds/i.test(err.message || '') ? 'acc.tooMany' : 'acc.sendFail'), 'error'); }
+        setTimeout(() => { btn.disabled = false; }, 30000);   // avoid hitting the email rate limit
+      };
       $('codeForm').onsubmit = async e => {
         e.preventDefault();
         const btn = e.submitter; if (btn) btn.disabled = true;
         try {
           await verifyCode($('codeInput').value.replace(/\D/g, ''));
-          toast('Signed in. Syncing your data…', 'success');
+          toast(t('acc.signedIn'), 'success');
         } catch (err) {
           console.error(err);
-          toast('That code didn’t work. Check it or request a new one.', 'error');
+          toast(t('acc.codeBad'), 'error');
           if (btn) btn.disabled = false;
         }
       };
@@ -235,13 +243,13 @@ const ShiftCloud = (() => {
       return;
     }
     box.innerHTML = `
-      <p class="block-hint">Optional. Sign in with your AkihiroLabs account (the same one as ByteBell) to keep your shifts in sync on all your devices. No password — we email you a sign-in link.</p>
+      <p class="block-hint">${t('acc.intro')}</p>
       <form class="rows" id="emailForm">
         <label class="row">
-          <span class="row-label">Email</span>
+          <span class="row-label">${t('acc.email')}</span>
           <input class="input input-w" id="emailInput" type="email" autocomplete="email" placeholder="you@example.com" required>
         </label>
-        <div class="row"><button class="btn btn-primary btn-sm" type="submit">Send sign-in email</button></div>
+        <div class="row"><button class="btn btn-primary btn-sm" type="submit">${t('acc.sendCode')}</button></div>
       </form>`;
     $('emailForm').onsubmit = async e => {
       e.preventDefault();
@@ -251,7 +259,7 @@ const ShiftCloud = (() => {
         render();
       } catch (err) {
         console.error(err);
-        toast(/rate|limit|seconds/i.test(err.message || '') ? 'Too many requests — wait a minute and try again.' : 'Could not send the code. Try again.', 'error');
+        toast(t(/rate|limit|seconds/i.test(err.message || '') ? 'acc.tooMany' : 'acc.sendFail'), 'error');
         if (btn) btn.disabled = false;
       }
     };
@@ -265,6 +273,7 @@ const ShiftCloud = (() => {
       if (ARRAYS[e.detail] || SINGLES[e.detail] || e.detail === 'all') syncSoon();
     });
     window.addEventListener('online', () => syncSoon(300));
+    window.addEventListener('sp:lang', render);
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncSoon(300); });
 
     try {

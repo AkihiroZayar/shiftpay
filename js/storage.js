@@ -126,6 +126,12 @@ const Storage = (() => {
     saveShifts(getShifts().filter(s => s.id !== id));
   }
 
+  /* Remove several shifts in one write (used by "Undo" after Fill) */
+  function deleteShifts(ids) {
+    const drop = new Set(ids);
+    saveShifts(getShifts().filter(s => !drop.has(s.id)));
+  }
+
   /* Query helpers */
   function getShiftsForDate(dateStr) {
     return getShifts().filter(s => s.date === dateStr);
@@ -324,42 +330,72 @@ const Storage = (() => {
     return tpl;
   }
 
+  function getTemplateById(id) { return getTemplates().find(t => t.id === id) || null; }
+
+  /* Edit a saved pattern. Shifts already filled from it are not changed. */
+  function updateTemplate(id, data) {
+    const list = getTemplates();
+    const idx  = list.findIndex(t => t.id === id);
+    if (idx === -1) return null;
+    list[idx] = {
+      ...list[idx],
+      name:         data.name,
+      jobId:        data.jobId,
+      startTime:    data.startTime,
+      endTime:      data.endTime,
+      breakMinutes: Number(data.breakMinutes) || 0,
+      daysOfWeek:   data.daysOfWeek || [],
+      id,
+      updatedAt:    new Date().toISOString(),
+    };
+    saveTemplates(list);
+    return list[idx];
+  }
+
   function deleteTemplate(id) {
     saveTemplates(getTemplates().filter(t => t.id !== id));
   }
 
-  /* Apply a template to a given month: creates shifts for each matching day */
+  /* Apply a template to a given month: creates shifts for each matching day.
+     Returns the ids of the new shifts (one write, so "Undo" can remove them). */
   function applyTemplate(tplId, year, month) {
-    const tpl = getTemplates().find(t => t.id === tplId);
-    if (!tpl) return 0;
+    const tpl = getTemplateById(tplId);
+    if (!tpl) return [];
+    const shifts = getShifts();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    let count = 0;
+    const added = [];
     for (let d = 1; d <= daysInMonth; d++) {
       const dt  = new Date(year, month, d);
-      const dow = dt.getDay();
-      if (!tpl.daysOfWeek.includes(dow)) continue;
+      if (!(tpl.daysOfWeek || []).includes(dt.getDay())) continue;
       const dateStr = JapaneseHolidays.toKey(dt);
       /* Skip if a shift for this job already exists on this date */
-      const exists = getShifts().some(s => s.date === dateStr && s.jobId === tpl.jobId);
-      if (exists) continue;
-      addShift({
-        date:         dateStr,
-        jobId:        tpl.jobId,
-        startTime:    tpl.startTime,
-        endTime:      tpl.endTime,
-        breakMinutes: tpl.breakMinutes,
-        notes:        `(from template: ${tpl.name})`,
-      });
-      count++;
+      if (shifts.some(s => s.date === dateStr && s.jobId === tpl.jobId)) continue;
+      const shift = {
+        id:               uid(),
+        createdAt:        new Date().toISOString(),
+        date:             dateStr,
+        jobId:            tpl.jobId,
+        startTime:        tpl.startTime,
+        endTime:          tpl.endTime,
+        breakMinutes:     Number(tpl.breakMinutes) || 0,
+        overrideRate:     null,
+        overtimeType:     null,
+        lateNightMode:    'auto',
+        lateNightMinutes: null,
+        notes:            '',
+      };
+      shifts.push(shift);
+      added.push(shift.id);
     }
-    return count;
+    if (added.length) saveShifts(shifts);
+    return added;
   }
 
   return {
     /* Jobs */
     getJobs, saveJobs, getJobById, addJob, updateJob, deleteJob,
     /* Shifts */
-    getShifts, saveShifts, getShiftById, addShift, updateShift, deleteShift,
+    getShifts, saveShifts, getShiftById, addShift, updateShift, deleteShift, deleteShifts,
     getShiftsForDate, getShiftsForMonth, getShiftsForYear,
     getShiftsInRange, getShiftsForJob,
     /* Tax */
@@ -371,7 +407,7 @@ const Storage = (() => {
     /* Goals */
     getGoals, saveGoals,
     /* Templates */
-    getTemplates, addTemplate, deleteTemplate, applyTemplate,
+    getTemplates, getTemplateById, addTemplate, updateTemplate, deleteTemplate, applyTemplate,
     /* Backup */
     exportAll, importAll, clearAll, loadSampleData,
     uid,
