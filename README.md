@@ -56,7 +56,7 @@ shiftpay/
 
 Open `index.html` in any modern browser — no build step required.
 
-Live: **https://akihirozayar.github.io/shiftpay/**
+Live: **https://pay.akihirolabs.com/**
 
 For demo data, go to **Settings → Data → Load demo** to populate 90 days of sample shifts across three jobs.
 

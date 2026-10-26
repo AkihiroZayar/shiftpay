@@ -3,6 +3,13 @@
 All notable changes to **ShiftPay** are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.5.0] — 2026-10-26
+
+- **Shift reminders (Web Push).** Settings → *Shift reminders*: get a notification 15 min – 2 hours before each upcoming shift, even when ShiftPay is closed. No account needed. On iPhone, add ShiftPay to the Home Screen first.
+- Reminders re-sync automatically whenever you add, edit or delete a shift.
+- **Installable app (PWA)** with offline support; an *Install* row appears in Settings when your browser supports it.
+- Now hosted on Cloudflare at **https://pay.akihirolabs.com** (moved from GitHub Pages).
+
 ## [1.4.0] — 2026-09-30
 
 - **Late night (深夜手当) is now counted by the hour.** Only the time between 22:00 and 05:00 gets +25%. Example: 18:00–24:00 → 4h normal + 2h late night (before, the whole shift got +25%).
