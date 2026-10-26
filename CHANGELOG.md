@@ -3,6 +3,15 @@
 All notable changes to **ShiftPay** are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.7.0] — 2026-10-26
+
+- **English / 日本語.** Settings → *Appearance* → *Language*. The whole app (menus, forms, messages, calendar, reminders) switches instantly; your choice is saved on this device, and the first visit follows your phone's language. Exported reports (PDF, Excel, CSV) stay in English.
+- **Edit repeating shifts.** Tap a pattern in *Jobs → Repeating shifts* to change its name, job, times, break or days. *Delete* is now inside that form. Editing a pattern does not change shifts already on your calendar — the next *Fill* uses the new times.
+- **Undo after Fill.** The "13 shifts added" message has an *Undo* button that removes exactly the shifts that Fill just added.
+- Filled shifts no longer get the automatic "(from template: …)" note.
+- **Sign-in with a 6-digit code.** The sign-in email now always contains a code (sent from byte@akihirolabs.com). Settings → *Account & sync* explains the code step, and you can send a new code if the first one doesn't arrive.
+- Service worker cache bumped to `shiftpay-v4` so installed apps update.
+
 ## [1.6.0] — 2026-10-26
 
 - **Optional account & sync.** Settings → *Account & sync*: sign in with your AkihiroLabs account (same as ByteBell) using a one-time email link (or code) — no password. Jobs, shifts, templates, fees, profile and goals then sync across all your devices.

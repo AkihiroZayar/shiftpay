@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.6.0-1E3A8A" alt="version 1.6.0">
+  <img src="https://img.shields.io/badge/version-1.7.0-1E3A8A" alt="version 1.7.0">
   <img src="https://img.shields.io/badge/vanilla-JavaScript-00A8CC" alt="Vanilla JS">
   <img src="https://img.shields.io/badge/PWA-installable-1E3A8A" alt="PWA">
 </p>
@@ -22,7 +22,8 @@
 - **Calendar shift entry** — Click any day to log a shift; edit or delete by clicking the event
 - **Automatic calculations** — Weekend and Japanese national holiday rates applied automatically
 - **Home** — One big number for this Week / Month / Year, take-home pay, monthly goal and 年収の壁 (yearly limit) progress
-- **Repeating shifts** — Save a weekly pattern and fill a whole month in one tap
+- **Repeating shifts** — Save a weekly pattern, fill a whole month in one tap (with Undo), tap a pattern to edit it
+- **English / 日本語** — switch the language in Settings → Appearance
 - **Tax & fees** — Monthly amounts for 所得税, 住民税, 健康保険, 年金, 雇用保険, transport and custom fees
 - **Export** — Filter by year, month, and job; export to PDF, Excel, or CSV
 - **Details** — Income by job and an income chart, folded away until you need them
@@ -42,6 +43,7 @@ shiftpay/
 │   └── main.css
 ├── js/
 │   ├── version.js       App version (APP_VERSION)
+│   ├── i18n.js          UI language: English / 日本語
 │   ├── holidays.js      Japanese public holiday engine
 │   ├── storage.js       LocalStorage CRUD layer
 │   ├── income.js        Calculation engine (rates, tax, projections)
@@ -107,7 +109,7 @@ Go to **Settings → Data → Export** to download a backup of your jobs, shifts
 
 ## Account & Sync
 
-Settings → **Account & sync** → enter your email → tap the link in the email (or type the code, if your email shows one). Your data is uploaded and kept in sync on every device you sign in on. Each job, shift and template syncs separately, so edits on two devices don't overwrite each other (the newest edit of the same item wins). Data is stored in Supabase with row-level security — only you can read it.
+Settings → **Account & sync** → enter your email → type the 6-digit code from the email (sent by byte@akihirolabs.com). Your data is uploaded and kept in sync on every device you sign in on. Each job, shift and template syncs separately, so edits on two devices don't overwrite each other (the newest edit of the same item wins). Data is stored in Supabase with row-level security — only you can read it.
 
 ---
 
@@ -139,7 +141,7 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 - The version lives in **`js/version.js`** (`APP_VERSION`) and is shown in **Settings → About**.
 - To release: bump the version, add an entry to [`CHANGELOG.md`](CHANGELOG.md), then create a GitHub Release tagged `vX.Y.Z`.
 
-Current version: **v1.3.0** — see the [changelog](CHANGELOG.md).
+Current version: **v1.7.0** — see the [changelog](CHANGELOG.md).
 
 ## 💬 Community
 
