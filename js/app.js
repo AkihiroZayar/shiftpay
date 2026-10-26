@@ -13,8 +13,8 @@ const App = (() => {
   const VIEWS   = ['home', 'calendar', 'jobs', 'settings'];
   /* Old view names (v1.1) → new home */
   const ALIASES = { dashboard: 'home', reports: 'settings', tax: 'settings', profile: 'settings', templates: 'jobs' };
-  const TITLES  = { home: 'Home', calendar: 'Calendar', jobs: 'Jobs', settings: 'Settings' };
-  const DOW     = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const t       = (k, v) => I18n.t(k, v);
+  const DOW     = () => t('dow');
 
   let _view          = 'home';
   let _period        = 'month';
@@ -24,7 +24,7 @@ const App = (() => {
   const $    = id => document.getElementById(id);
   const yen  = n  => Income.formatCurrency(n);
   const hrs  = n  => Income.formatHours(n);
-  const plural = (n, word) => `${n} ${word}${n !== 1 ? 's' : ''}`;
+  const nShifts = n => t('shifts', { n });
 
   function _esc(str) {
     return String(str ?? '').replace(/[&<>"']/g, c =>
@@ -32,7 +32,7 @@ const App = (() => {
   }
 
   function _fmtDate(dateStr, opts = { weekday: 'short', month: 'short', day: 'numeric' }) {
-    return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', opts);
+    return new Date(dateStr + 'T12:00:00').toLocaleDateString(I18n.locale, opts);
   }
 
   function _saveSetting(patch) {
@@ -66,7 +66,7 @@ const App = (() => {
 
   function _setTitle() {
     const name = Storage.getProfile().name;
-    $('pageTitle').textContent = _view === 'home' && name ? `Hi, ${name}` : TITLES[_view];
+    $('pageTitle').textContent = _view === 'home' && name ? t('hi', { name }) : t(`nav.${_view}`);
   }
 
   function _renderView(view) {
@@ -88,13 +88,13 @@ const App = (() => {
     $('homeMain').hidden  = empty;
     if (empty) {
       if (!jobs.length) {
-        $('homeEmptyTitle').textContent = 'Welcome to ShiftPay';
-        $('homeEmptyText').textContent  = 'Start by adding a job with your hourly wage.';
-        $('homeEmptyBtn').textContent   = 'Add a job';
+        $('homeEmptyTitle').textContent = t('home.welcomeTitle');
+        $('homeEmptyText').textContent  = t('home.welcomeText');
+        $('homeEmptyBtn').textContent   = t('home.addJob');
       } else {
-        $('homeEmptyTitle').textContent = 'No shifts yet';
-        $('homeEmptyText').textContent  = 'Add your first shift and your earnings will show up here.';
-        $('homeEmptyBtn').textContent   = 'Add your first shift';
+        $('homeEmptyTitle').textContent = t('home.noShiftsTitle');
+        $('homeEmptyText').textContent  = t('home.noShiftsText');
+        $('homeEmptyBtn').textContent   = t('home.addFirstShift');
       }
       return;
     }
@@ -107,12 +107,12 @@ const App = (() => {
 
     $('heroLabel').textContent  = p.label;
     $('heroAmount').textContent = yen(p.stat.gross);
-    $('heroMeta').textContent   = `${plural(p.stat.count, 'shift')} · ${hrs(p.stat.hours)}`;
+    $('heroMeta').textContent   = `${nShifts(p.stat.count)} · ${hrs(p.stat.hours)}`;
 
     /* Take-home (monthly deductions → month view only) */
     const netEl = $('heroNet');
     if (_period === 'month' && tax.enabled && p.stat.deductions > 0) {
-      netEl.innerHTML = `Take-home ≈ <strong>${yen(p.stat.net)}</strong> after ${yen(p.stat.deductions)} tax &amp; fees`;
+      netEl.innerHTML = t('home.takeHome', { net: yen(p.stat.net), ded: yen(p.stat.deductions) });
       netEl.hidden = false;
     } else {
       netEl.hidden = true;
@@ -124,7 +124,7 @@ const App = (() => {
     const noteEl   = $('heroNote');
     if (upcoming.length) {
       const upAgg = Income.calcAggregate(upcoming);
-      noteEl.textContent = `Includes ${yen(upAgg.gross)} from ${plural(upcoming.length, 'upcoming shift')}`;
+      noteEl.textContent = t('home.includes', { amt: yen(upAgg.gross), n: upcoming.length });
       noteEl.hidden = false;
     } else {
       noteEl.hidden = true;
@@ -151,10 +151,10 @@ const App = (() => {
       });
       const shifts = Storage.getShiftsInRange(days[0], days[6]);
       return {
-        label:  `This week · ${_fmtDate(days[0], { month: 'short', day: 'numeric' })} – ${_fmtDate(days[6], { month: 'short', day: 'numeric' })}`,
+        label:  t('home.thisWeek', { a: _fmtDate(days[0], { month: 'short', day: 'numeric' }), b: _fmtDate(days[6], { month: 'short', day: 'numeric' }) }),
         stat:   Income.getThisWeek(tax),
         shifts,
-        chartLabels: days.map(k => DOW[new Date(k + 'T12:00:00').getDay()]),
+        chartLabels: days.map(k => DOW()[new Date(k + 'T12:00:00').getDay()]),
         chartData:   days.map(k => Math.round(Income.calcAggregate(shifts.filter(s => s.date === k)).gross)),
       };
     }
@@ -176,7 +176,7 @@ const App = (() => {
     const keys   = Array.from({ length: nDays }, (_, i) =>
       `${y}-${String(m + 1).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`);
     return {
-      label:  now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+      label:  now.toLocaleDateString(I18n.locale, { month: 'long', year: 'numeric' }),
       stat:   Income.getMonth(y, m, tax),
       shifts,
       chartLabels: keys.map((_, i) => String(i + 1)),
@@ -195,11 +195,11 @@ const App = (() => {
       const pct   = Math.min(100, Math.round(gross / goals.monthlyGross * 100));
       const done  = gross >= goals.monthlyGross;
       parts.push(_progressHTML({
-        title: 'Monthly goal',
+        title: t('goal.monthly'),
         value: `${yen(gross)} / ${yen(goals.monthlyGross)}`,
         pct,
         cls:   done ? 'is-done' : '',
-        foot:  done ? 'Goal reached 🎉' : `${yen(goals.monthlyGross - gross)} to go`,
+        foot:  done ? t('goal.reached') : t('goal.toGo', { amt: yen(goals.monthlyGross - gross) }),
       }));
     }
 
@@ -214,7 +214,7 @@ const App = (() => {
         value: `${yen(gross)} / ${yen(goals.yearlyLimit)}`,
         pct,
         cls:   over ? 'is-over' : ratio >= 0.85 ? 'is-warn' : '',
-        foot:  over ? `Over by ${yen(gross - goals.yearlyLimit)}` : `${yen(goals.yearlyLimit - gross)} left this year`,
+        foot:  over ? t('limit.over', { amt: yen(gross - goals.yearlyLimit) }) : t('limit.left', { amt: yen(goals.yearlyLimit - gross) }),
       }));
     }
 
@@ -247,9 +247,9 @@ const App = (() => {
                       .slice(0, 5);
 
     let html = '';
-    if (next) html += _shiftRowHTML(next, jobMap.get(next.jobId), 'Next');
+    if (next) html += _shiftRowHTML(next, jobMap.get(next.jobId), t('home.next'));
     html += recent.map(s => _shiftRowHTML(s, jobMap.get(s.jobId))).join('');
-    container.innerHTML = html || `<p class="list-empty">No past shifts yet.</p>`;
+    container.innerHTML = html || `<p class="list-empty">${t('home.noPast')}</p>`;
   }
 
   function _shiftRowHTML(shift, job, tag) {
@@ -283,10 +283,10 @@ const App = (() => {
         <span class="dot" style="background:${_esc(j.color)}"></span>
         <span class="item-main">
           <span class="item-title">${_esc(j.jobName)}</span>
-          <span class="item-sub">${plural(j.count, 'shift')} · ${hrs(j.hours)} · ${Math.round(j.gross / total * 100)}%</span>
+          <span class="item-sub">${nShifts(j.count)} · ${hrs(j.hours)} · ${Math.round(j.gross / total * 100)}%</span>
         </span>
         <span class="item-amount">${yen(j.gross)}</span>
-      </div>`).join('') : `<p class="list-empty">No shifts in this period.</p>`;
+      </div>`).join('') : `<p class="list-empty">${t('home.noPeriod')}</p>`;
 
     ChartsView.renderSimpleBar('homeChart', p.chartLabels, p.chartData);
   }
@@ -303,7 +303,7 @@ const App = (() => {
     const all = Storage.getShifts();
     list.innerHTML = jobs.map(job => {
       const agg = Income.calcAggregate(all.filter(s => s.jobId === job.id));
-      const sub = [job.company, plural(agg.count, 'shift'), `${yen(agg.gross)} earned`].filter(Boolean).map(_esc).join(' · ');
+      const sub = [job.company, nShifts(agg.count), t('jobs.earned', { amt: yen(agg.gross) })].filter(Boolean).map(_esc).join(' · ');
       return `
         <button class="item" data-job-id="${job.id}">
           <span class="dot" style="background:${_esc(job.color)}"></span>
@@ -311,7 +311,7 @@ const App = (() => {
             <span class="item-title">${_esc(job.name)}</span>
             <span class="item-sub">${sub}</span>
           </span>
-          <span class="item-amount">${yen(job.baseWage)}<small>/hr</small></span>
+          <span class="item-amount">${yen(job.baseWage)}<small>${t('perHour')}</small></span>
         </button>`;
     }).join('');
   }
@@ -323,30 +323,34 @@ const App = (() => {
     const now       = new Date();
 
     if (!templates.length) {
-      list.innerHTML = `<p class="list-empty">No repeating shifts yet.</p>`;
+      list.innerHTML = `<p class="list-empty">${t('tpl.empty')}</p>`;
       return;
     }
 
     const order = [1, 2, 3, 4, 5, 6, 0];
     const monthOptions = Array.from({ length: 3 }, (_, i) => {
       const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-      return `<option value="${d.getFullYear()}-${d.getMonth()}">${d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</option>`;
+      /* Short label: just the month, plus the year only when it's next year (keeps the box narrow) */
+      const opts = d.getFullYear() === now.getFullYear() ? { month: 'short' } : { month: 'short', year: 'numeric' };
+      return `<option value="${d.getFullYear()}-${d.getMonth()}">${d.toLocaleDateString(I18n.locale, opts)}</option>`;
     }).join('');
 
     list.innerHTML = templates.map(tpl => {
       const job  = jobMap.get(tpl.jobId);
-      const days = order.filter(d => (tpl.daysOfWeek || []).includes(d)).map(d => DOW[d]).join(', ') || 'No days';
+      const days = order.filter(d => (tpl.daysOfWeek || []).includes(d)).map(d => DOW()[d]).join(I18n.lang === 'ja' ? '・' : ', ') || t('tpl.noDays');
       return `
         <div class="item item-static item-tpl">
-          <span class="dot" style="background:${_esc(job?.color || '#94a3b8')}"></span>
-          <span class="item-main">
-            <span class="item-title">${_esc(tpl.name)}</span>
-            <span class="item-sub">${_esc(job ? job.name : 'Deleted job')} · ${days} · ${tpl.startTime}–${tpl.endTime}</span>
-          </span>
+          <button type="button" class="tpl-open" data-tpl-id="${tpl.id}" aria-label="${_esc(t('tpl.edit'))}: ${_esc(tpl.name)}">
+            <span class="dot" style="background:${_esc(job?.color || '#94a3b8')}"></span>
+            <span class="item-main">
+              <span class="item-title">${_esc(tpl.name)}</span>
+              <span class="item-sub">${_esc(job ? job.name : t('tpl.deletedJob'))} · ${days} · ${tpl.startTime}–${tpl.endTime}</span>
+            </span>
+            <svg class="tpl-edit-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+          </button>
           <span class="item-actions">
-            <select class="input input-xs tpl-month-sel" data-id="${tpl.id}" aria-label="Month">${monthOptions}</select>
-            <button class="btn btn-ghost btn-sm tpl-apply-btn" data-id="${tpl.id}" ${job ? '' : 'disabled'}>Fill</button>
-            <button class="icon-btn tpl-delete-btn" data-id="${tpl.id}" aria-label="Delete"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+            <select class="input input-xs tpl-month-sel" data-id="${tpl.id}" aria-label="${_esc(t('tpl.month'))}">${monthOptions}</select>
+            <button class="btn btn-ghost btn-sm tpl-apply-btn" data-id="${tpl.id}" ${job ? '' : 'disabled'}>${t('tpl.fill')}</button>
           </span>
         </div>`;
     }).join('');
@@ -359,31 +363,32 @@ const App = (() => {
     });
 
     $('templatesList').addEventListener('click', e => {
-      const del = e.target.closest('.tpl-delete-btn');
-      if (del) {
-        Modals.showConfirm('Delete repeating shift', 'Remove this pattern? Shifts already added stay on your calendar.').then(ok => {
-          if (!ok) return;
-          Storage.deleteTemplate(del.dataset.id);
-          _renderTemplates();
-          Modals.showToast('Deleted.', 'info');
-        });
-        return;
-      }
+      const open = e.target.closest('.tpl-open');
+      if (open) { Modals.openTemplateModal(open.dataset.tplId); return; }
+
       const apply = e.target.closest('.tpl-apply-btn');
       if (apply) {
         const sel = $('templatesList').querySelector(`.tpl-month-sel[data-id="${apply.dataset.id}"]`);
         const [yr, mo] = sel.value.split('-').map(Number);
-        const count = Storage.applyTemplate(apply.dataset.id, yr, mo);
+        const added = Storage.applyTemplate(apply.dataset.id, yr, mo);
         refresh();
-        Modals.showToast(count ? `${plural(count, 'shift')} added.` : 'Nothing new to add — those days are already filled.', count ? 'success' : 'info');
+        if (!added.length) { Modals.showToast(t('tpl.nothing'), 'info'); return; }
+        Modals.showToast(t('tpl.added', { n: added.length }), 'success', {
+          label: t('undo'),
+          onClick: () => {
+            Storage.deleteShifts(added);
+            refresh();
+            Modals.showToast(t('tpl.undone', { n: added.length }), 'info');
+          },
+        });
       }
     });
 
     $('addJobBtn').addEventListener('click',  () => Modals.openJobModal(null));
     $('addJobBtn2').addEventListener('click', () => Modals.openJobModal(null));
     $('addTemplateBtn').addEventListener('click', () => {
-      if (!Storage.getJobs().length) { Modals.showToast('Add a job first.', 'info'); return; }
-      Modals.openTemplateModal();
+      if (!Storage.getJobs().length) { Modals.showToast(t('jobs.addFirstToast'), 'info'); return; }
+      Modals.openTemplateModal(null);
     });
   }
 
@@ -404,7 +409,7 @@ const App = (() => {
     Reports.render();
 
     const jobs = Storage.getJobs().length, shifts = Storage.getShifts().length;
-    $('dataStats').textContent = `${plural(jobs, 'job')} · ${plural(shifts, 'shift')} · saved in this browser`;
+    $('dataStats').textContent = t('set.dataStats', { jobs: t('jobsN', { n: jobs }), shifts: nShifts(shifts) });
 
     $('darkModeToggle').checked = document.documentElement.dataset.theme === 'dark';
     $('aboutLine').textContent  = `ShiftPay v${typeof APP_VERSION !== 'undefined' ? APP_VERSION : ''} · 🦝 AkihiroLabs`;
@@ -420,17 +425,17 @@ const App = (() => {
     $('profileName').addEventListener('change', e => {
       Storage.saveProfile({ ...Storage.getProfile(), name: e.target.value.trim() });
       _setTitle();
-      Modals.showToast('Saved.', 'success');
+      Modals.showToast(t('saved'), 'success');
     });
     $('monthlyGoalInput').addEventListener('change', e => {
       Storage.saveGoals({ monthlyGross: Math.max(0, parseInt(e.target.value) || 0) });
-      Modals.showToast('Goal saved.', 'success');
+      Modals.showToast(t('set.goalSaved'), 'success');
     });
     $('yearlyLimitInput').addEventListener('change', e => {
       const v = Math.max(0, parseInt(e.target.value) || 0);
       Storage.saveGoals({ yearlyLimit: v });
       _markLimitPreset(v);
-      Modals.showToast('Limit saved.', 'success');
+      Modals.showToast(t('set.limitSaved'), 'success');
     });
     $('limitPresets').addEventListener('click', e => {
       const chip = e.target.closest('.chip');
@@ -439,7 +444,7 @@ const App = (() => {
       Storage.saveGoals({ yearlyLimit: v });
       $('yearlyLimitInput').value = v || '';
       _markLimitPreset(v);
-      Modals.showToast(v ? `Limit set to ${yen(v)}.` : 'Limit turned off.', 'success');
+      Modals.showToast(v ? t('set.limitSet', { amt: yen(v) }) : t('set.limitOff'), 'success');
     });
 
     /* Tax master switch */
@@ -468,10 +473,10 @@ const App = (() => {
       if (e.target.closest('#confirmAddTaxBtn')) {
         const label  = $('newTaxLabel').value.trim();
         const amount = parseInt($('newTaxAmount').value) || 0;
-        if (!label) { Modals.showToast('Enter a name for the fee.', 'error'); return; }
+        if (!label) { Modals.showToast(t('set.feeName'), 'error'); return; }
         Storage.addTaxItem({ label, category: 'custom', monthlyAmount: amount });
         _renderTax();
-        Modals.showToast('Fee added.', 'success');
+        Modals.showToast(t('set.feeAdded'), 'success');
       }
     });
 
@@ -482,7 +487,7 @@ const App = (() => {
       const a    = Object.assign(document.createElement('a'), { href: url, download: `shiftpay-backup-${new Date().toISOString().slice(0, 10)}.json` });
       document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(url);
-      Modals.showToast('Backup downloaded.', 'success');
+      Modals.showToast(t('set.backupDone'), 'success');
     });
 
     $('importFile').addEventListener('change', e => {
@@ -490,8 +495,8 @@ const App = (() => {
       if (!file) return;
       const reader = new FileReader();
       reader.onload = ev => {
-        try { Storage.importAll(JSON.parse(ev.target.result)); _initTheme(); refresh(); Modals.showToast('Backup restored.', 'success'); }
-        catch { Modals.showToast('Import failed — not a ShiftPay backup file.', 'error'); }
+        try { Storage.importAll(JSON.parse(ev.target.result)); _initTheme(); refresh(); Modals.showToast(t('set.restored'), 'success'); }
+        catch { Modals.showToast(t('set.importFail'), 'error'); }
       };
       reader.readAsText(file);
       e.target.value = '';
@@ -499,26 +504,24 @@ const App = (() => {
 
     $('loadSampleBtn').addEventListener('click', () => {
       if (typeof ShiftCloud !== 'undefined' && ShiftCloud.signedIn) {
-        Modals.showToast('Sign out first — demo data would replace the shifts in your account.', 'info');
+        Modals.showToast(t('set.demoSignedIn'), 'info');
         return;
       }
-      Modals.showConfirm('Load demo data', 'This replaces your current jobs and shifts with sample data. Continue?').then(ok => {
+      Modals.showConfirm(t('set.demoTitle'), t('set.demoMsg'), t('set.loadDemo')).then(ok => {
         if (!ok) return;
         Storage.loadSampleData();
         refresh();
-        Modals.showToast('Demo data loaded.', 'success');
+        Modals.showToast(t('set.demoLoaded'), 'success');
       });
     });
 
     $('clearDataBtn').addEventListener('click', () => {
       const synced = typeof ShiftCloud !== 'undefined' && ShiftCloud.signedIn;
-      Modals.showConfirm('Clear all data', synced
-        ? 'Permanently delete all jobs, shifts and fees from your account and ALL your signed-in devices? This cannot be undone.'
-        : 'Permanently delete all jobs, shifts and fees? This cannot be undone.').then(ok => {
+      Modals.showConfirm(t('set.clearTitle'), synced ? t('set.clearMsgSynced') : t('set.clearMsg')).then(ok => {
         if (!ok) return;
         Storage.clearAll();
         refresh();
-        Modals.showToast('All data cleared.', 'info');
+        Modals.showToast(t('set.cleared'), 'info');
       });
     });
 
@@ -546,19 +549,19 @@ const App = (() => {
           <input type="checkbox" class="tax-toggle" data-id="${item.id}" ${item.enabled ? 'checked' : ''} ${on ? '' : 'disabled'}>
           <span class="switch-track"></span>
         </label>
-        <span class="tax-name">${_esc(item.label)}${item.labelEn ? ` <small>${_esc(item.labelEn)}</small>` : ''}</span>
+        <span class="tax-name">${_esc(item.label)}${item.labelEn && I18n.lang !== 'ja' ? ` <small>${_esc(item.labelEn)}</small>` : ''}</span>
         <span class="input-yen">
           <input type="number" class="input input-xs tax-amount-input" data-id="${item.id}"
-                 value="${item.monthlyAmount || 0}" min="0" step="100" ${on && item.enabled ? '' : 'disabled'} aria-label="${_esc(item.label)} per month">
+                 value="${item.monthlyAmount || 0}" min="0" step="100" ${on && item.enabled ? '' : 'disabled'} aria-label="${_esc(t('set.taxPerMonth', { label: item.label }))}">
         </span>
         ${item.removable
-          ? `<button class="icon-btn tax-remove-btn" data-id="${item.id}" aria-label="Remove"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>`
+          ? `<button class="icon-btn tax-remove-btn" data-id="${item.id}" aria-label="${t('remove')}"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>`
           : `<span class="icon-spacer"></span>`}
       </div>`).join('') + (on ? `
       <div class="tax-add">
-        <input type="text" id="newTaxLabel" class="input" placeholder="Add a fee, e.g. 自転車代">
+        <input type="text" id="newTaxLabel" class="input" placeholder="${t('set.taxAddPh')}">
         <span class="input-yen"><input type="number" id="newTaxAmount" class="input input-xs" placeholder="0" min="0" step="100"></span>
-        <button class="btn btn-ghost btn-sm" id="confirmAddTaxBtn">Add</button>
+        <button class="btn btn-ghost btn-sm" id="confirmAddTaxBtn">${t('add')}</button>
       </div>` : '');
 
     _updateTaxTotal();
@@ -567,7 +570,7 @@ const App = (() => {
   function _updateTaxTotal() {
     const tax   = Storage.getTaxSettings();
     const total = Income.calcMonthlyDeductions(tax);
-    $('taxTotal').textContent = tax.enabled ? `Total ${yen(total)} / month` : '';
+    $('taxTotal').textContent = tax.enabled ? t('set.taxTotal', { amt: yen(total) }) : '';
   }
 
   /* ════════════════════════════════════════════
@@ -587,7 +590,7 @@ const App = (() => {
   ════════════════════════════════════════════ */
   function _openAddShift() {
     if (!Storage.getJobs().length) {
-      Modals.showToast('Add a job first — then you can log shifts.', 'info');
+      Modals.showToast(t('jobs.addFirstShift'), 'info');
       Modals.openJobModal(null);
       return;
     }
@@ -625,6 +628,30 @@ const App = (() => {
   }
 
   /* ════════════════════════════════════════════
+     LANGUAGE (English / 日本語)
+  ════════════════════════════════════════════ */
+  function _applyLanguage() {
+    I18n.apply();
+    /* Day-picker labels and report month names come from the locale */
+    document.querySelectorAll('[data-dow]').forEach(el => { el.textContent = DOW()[Number(el.dataset.dow)]; });
+    document.querySelectorAll('#reportMonth option[value]:not([value=""])').forEach(o => {
+      o.textContent = new Date(2000, Number(o.value), 1).toLocaleDateString(I18n.locale, { month: 'long' });
+    });
+  }
+
+  function _bindLanguage() {
+    document.querySelectorAll('#langSwitch [data-lang]').forEach(btn => {
+      btn.addEventListener('click', () => I18n.setLang(btn.dataset.lang));
+    });
+    window.addEventListener('sp:lang', () => {
+      _applyLanguage();
+      if (typeof CalendarView !== 'undefined' && CalendarView.setLocale) CalendarView.setLocale();
+      ChartsView.destroyAll();
+      refresh();
+    });
+  }
+
+  /* ════════════════════════════════════════════
      GLOBAL REFRESH
   ════════════════════════════════════════════ */
   function refresh() {
@@ -638,6 +665,7 @@ const App = (() => {
   ════════════════════════════════════════════ */
   function init() {
     _initTheme();
+    _applyLanguage();
     /* AkihiroLabs Discord links */
     document.querySelectorAll('[data-discord]').forEach(a => {
       a.href = typeof DISCORD_URL !== 'undefined' ? DISCORD_URL : '#';
@@ -648,6 +676,7 @@ const App = (() => {
     _bindNav();
     _bindJobs();
     _bindSettings();
+    _bindLanguage();
     Modals.init();
     Reports.init();
     navigateTo('home');

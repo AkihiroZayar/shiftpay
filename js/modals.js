@@ -13,7 +13,7 @@ const Modals = (() => {
   /* ════════════════════════════════════════════
      TOAST
   ════════════════════════════════════════════ */
-  function showToast(message, type = 'success') {
+  function showToast(message, type = 'success', action = null) {
     const container = document.getElementById('toastContainer');
     if (!container) return;
 
@@ -27,6 +27,19 @@ const Modals = (() => {
     };
 
     toast.innerHTML = `<span class="toast-icon">${icons[type] || icons.info}</span><span>${message}</span>`;
+    /* Optional action button, e.g. { label: 'Undo', onClick } */
+    if (action && action.label) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'toast-action';
+      btn.textContent = action.label;
+      btn.addEventListener('click', () => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 350);
+        action.onClick?.();
+      }, { once: true });
+      toast.appendChild(btn);
+    }
     container.appendChild(toast);
 
     // Animate in
@@ -38,7 +51,7 @@ const Modals = (() => {
     setTimeout(() => {
       toast.classList.remove('show');
       setTimeout(() => toast.remove(), 350);
-    }, 3200);
+    }, action ? 7000 : 3200);
   }
 
   /* ════════════════════════════════════════════
@@ -59,18 +72,20 @@ const Modals = (() => {
     _closeOverlay();
     _editingShiftId = null;
     _editingJobId   = null;
+    _editingTemplateId = null;
     if (_confirmResolve) { _confirmResolve(false); _confirmResolve = null; }
   }
 
   /* ════════════════════════════════════════════
      CONFIRM DIALOG
   ════════════════════════════════════════════ */
-  function showConfirm(title, message) {
+  function showConfirm(title, message, okLabel) {
     return new Promise(resolve => {
       _confirmResolve = resolve;
       const modal = document.getElementById('confirmModal');
       document.getElementById('confirmTitle').textContent   = title;
       document.getElementById('confirmMessage').textContent = message;
+      document.getElementById('confirmOk').textContent      = okLabel || I18n.t('delete');
       modal.classList.add('active');
       _openOverlay();
     });
@@ -102,7 +117,7 @@ const Modals = (() => {
     /* Populate job dropdown */
     const jobs = Storage.getJobs();
     const sel  = document.getElementById('shiftJobId');
-    sel.innerHTML = '<option value="">Select job…</option>';
+    sel.innerHTML = `<option value="">${I18n.t('shift.selectJob')}</option>`;
     jobs.forEach(j => {
       const opt       = document.createElement('option');
       opt.value       = j.id;
@@ -125,7 +140,7 @@ const Modals = (() => {
       const shift = Storage.getShiftById(shiftId);
       if (!shift) return;
 
-      document.getElementById('shiftModalTitle').textContent = 'Edit shift';
+      document.getElementById('shiftModalTitle').textContent = I18n.t('shift.editTitle');
       document.getElementById('shiftDate').value          = shift.date;
       document.getElementById('shiftJobId').value         = shift.jobId;
       document.getElementById('shiftStart').value         = shift.startTime;
@@ -141,7 +156,7 @@ const Modals = (() => {
       document.getElementById('deleteShiftBtn').hidden = false;
     } else {
       /* ─ Add mode ─ */
-      document.getElementById('shiftModalTitle').textContent = 'Add shift';
+      document.getElementById('shiftModalTitle').textContent = I18n.t('shift.addTitle');
       document.getElementById('shiftDate').value          = dateStr || Income.todayKey();
       document.getElementById('shiftJobId').value         = jobs.length ? jobs[0].id : '';
       document.getElementById('shiftStart').value         = '09:00';
@@ -174,9 +189,7 @@ const Modals = (() => {
     const wrap = document.getElementById('shiftLateManualWrap');
     if (wrap) wrap.hidden = !manual;
     const hint = document.getElementById('shiftLateHint');
-    if (hint) hint.textContent = manual
-      ? 'Enter your late-night hours yourself (e.g. 1 or 1.5).'
-      : 'Counted automatically from your start and end time.';
+    if (hint) hint.textContent = I18n.t(manual ? 'shift.lateManual' : 'shift.lateAuto');
   }
 
   function _lateFields() {
@@ -229,10 +242,10 @@ const Modals = (() => {
     const details = Income.calcShiftDetails(pseudoShift, job, tax);
 
     const dayLabels = {
-      weekday: 'Weekday',
-      weekend: 'Weekend rate',
-      holiday: 'Holiday rate',
-      custom:  'Custom rate',
+      weekday: I18n.t('shift.weekday'),
+      weekend: I18n.t('shift.weekend'),
+      holiday: I18n.t('shift.holiday'),
+      custom:  I18n.t('shift.custom'),
     };
 
     const multStr = details.multiplier && details.multiplier !== 1
@@ -241,14 +254,14 @@ const Modals = (() => {
 
     document.getElementById('previewDayType').textContent = dayLabels[details.dayType] || '';
     document.getElementById('prevHours').textContent      = Income.formatHours(details.workedHours);
-    document.getElementById('prevRate').textContent       = Income.formatCurrency(details.rate) + '/hr' + multStr;
+    document.getElementById('prevRate').textContent       = Income.formatCurrency(details.rate) + I18n.t('perHour') + multStr;
     document.getElementById('prevGross').textContent      = Income.formatCurrency(details.gross);
 
     const lateRow = document.getElementById('prevLateRow');
     if (lateRow) {
       lateRow.hidden = !(details.lateNightMinutes > 0);
       document.getElementById('prevLateHours').textContent =
-        Income.formatHours(details.lateNightMinutes / 60) + (details.lateNightMode === 'manual' ? ' (manual)' : '');
+        Income.formatHours(details.lateNightMinutes / 60) + (details.lateNightMode === 'manual' ? I18n.t('shift.manualSuffix') : '');
       document.getElementById('prevLateExtra').textContent = '+' + Income.formatCurrency(details.lateNightExtra);
     }
 
@@ -257,9 +270,9 @@ const Modals = (() => {
 
     const monthlyDed = Income.calcMonthlyDeductions(tax);
     if (tax.enabled && monthlyDed > 0) {
-      document.getElementById('prevTax').textContent = Income.formatCurrency(monthlyDed) + '/month';
+      document.getElementById('prevTax').textContent = Income.formatCurrency(monthlyDed) + I18n.t('perMonth');
       const taxLabelEl = taxRow?.querySelector('span');
-      if (taxLabelEl) taxLabelEl.textContent = 'Monthly deductions';
+      if (taxLabelEl) taxLabelEl.textContent = I18n.t('shift.monthlyDed');
       if (taxRow) taxRow.hidden = false;
       if (netRow) netRow.hidden = true; // net depends on month total, not per shift
     } else {
@@ -284,16 +297,16 @@ const Modals = (() => {
     };
 
     if (!data.date || !data.jobId || !data.startTime || !data.endTime) {
-      showToast('Please fill in all required fields.', 'error');
+      showToast(I18n.t('shift.required'), 'error');
       return;
     }
 
     if (_editingShiftId) {
       Storage.updateShift(_editingShiftId, data);
-      showToast('Shift updated.', 'success');
+      showToast(I18n.t('shift.updated'), 'success');
     } else {
       Storage.addShift(data);
-      showToast('Shift saved.', 'success');
+      showToast(I18n.t('shift.saved'), 'success');
     }
 
     _closeShiftModal();
@@ -302,10 +315,10 @@ const Modals = (() => {
 
   function _deleteShift() {
     if (!_editingShiftId) return;
-    showConfirm('Delete Shift', 'Remove this shift? This cannot be undone.').then(ok => {
+    showConfirm(I18n.t('shift.deleteTitle'), I18n.t('shift.deleteMsg')).then(ok => {
       if (!ok) return;
       Storage.deleteShift(_editingShiftId);
-      showToast('Shift deleted.', 'info');
+      showToast(I18n.t('shift.deleted'), 'info');
       _closeShiftModal();
       App.refresh();
     });
@@ -358,7 +371,7 @@ const Modals = (() => {
     if (jobId) {
       const job = Storage.getJobById(jobId);
       if (!job) return;
-      document.getElementById('jobModalTitle').textContent  = 'Edit job';
+      document.getElementById('jobModalTitle').textContent  = I18n.t('job.editTitle');
       document.getElementById('jobName').value              = job.name;
       document.getElementById('jobCompany').value           = job.company || '';
       document.getElementById('jobWage').value              = job.baseWage;
@@ -373,7 +386,7 @@ const Modals = (() => {
       _setRateMode('holiday', job.holidayMode || 'multiplier');
       document.getElementById('deleteJobBtn').hidden = false;
     } else {
-      document.getElementById('jobModalTitle').textContent  = 'Add job';
+      document.getElementById('jobModalTitle').textContent  = I18n.t('job.addTitle');
       document.getElementById('jobName').value              = '';
       document.getElementById('jobCompany').value           = '';
       document.getElementById('jobWage').value              = '';
@@ -456,40 +469,40 @@ const Modals = (() => {
     /* Weekend */
     if (weekendEnabled) {
       const label = weekendMode === 'fixed'
-        ? `¥ fixed rate`
-        : `×${weekendMult} multiplier`;
+        ? I18n.t('job.fixedLabel')
+        : I18n.t('job.multLabel', { m: weekendMult });
       if (weekend)    { weekend.textContent = Income.formatCurrency(weekendRate) + '/hr'; weekend.style.opacity = '1'; }
       if (weekendTag)   weekendTag.style.display = 'none';
       const wHint = document.getElementById('jobWeekendHint');
-      if (wHint) wHint.textContent = `Weekend: ${Income.formatCurrency(weekendRate)}/hr (${label})`;
+      if (wHint) wHint.textContent = I18n.t('job.weekendHint', { rate: Income.formatCurrency(weekendRate), label });
     } else {
       if (weekend)    { weekend.textContent = Income.formatCurrency(wage) + '/hr'; weekend.style.opacity = '0.4'; }
       if (weekendTag)   weekendTag.style.display = '';
       const wHint = document.getElementById('jobWeekendHint');
-      if (wHint) wHint.textContent = 'Weekend shifts use the same base rate';
+      if (wHint) wHint.textContent = I18n.t('job.weekendSame');
     }
 
     /* Holiday */
     if (holidayEnabled) {
       const label = holidayMode === 'fixed'
-        ? `¥ fixed rate`
-        : `×${holidayMult} multiplier`;
+        ? I18n.t('job.fixedLabel')
+        : I18n.t('job.multLabel', { m: holidayMult });
       if (holiday)    { holiday.textContent = Income.formatCurrency(holidayRate) + '/hr'; holiday.style.opacity = '1'; }
       if (holidayTag)   holidayTag.style.display = 'none';
       const hHint = document.getElementById('jobHolidayHint');
-      if (hHint) hHint.textContent = `Holiday: ${Income.formatCurrency(holidayRate)}/hr (${label})`;
+      if (hHint) hHint.textContent = I18n.t('job.holidayHint', { rate: Income.formatCurrency(holidayRate), label });
     } else {
       if (holiday)    { holiday.textContent = Income.formatCurrency(wage) + '/hr'; holiday.style.opacity = '0.4'; }
       if (holidayTag)   holidayTag.style.display = '';
       const hHint = document.getElementById('jobHolidayHint');
-      if (hHint) hHint.textContent = 'Holiday shifts use the same base rate';
+      if (hHint) hHint.textContent = I18n.t('job.holidaySame');
     }
 
     /* Badges */
     const wBadge = document.getElementById('weekendRatePreview');
     const hBadge = document.getElementById('holidayRatePreview');
-    if (wBadge) { wBadge.textContent = weekendEnabled ? Income.formatCurrency(weekendRate) + '/hr' : 'OFF'; wBadge.className = 'rate-preview-badge' + (weekendEnabled ? ' badge-active' : ' badge-off'); }
-    if (hBadge) { hBadge.textContent = holidayEnabled ? Income.formatCurrency(holidayRate) + '/hr' : 'OFF'; hBadge.className = 'rate-preview-badge' + (holidayEnabled ? ' badge-active' : ' badge-off'); }
+    if (wBadge) { wBadge.textContent = weekendEnabled ? Income.formatCurrency(weekendRate) + I18n.t('perHour') : I18n.t('job.off'); wBadge.className = 'rate-preview-badge' + (weekendEnabled ? ' badge-active' : ' badge-off'); }
+    if (hBadge) { hBadge.textContent = holidayEnabled ? Income.formatCurrency(holidayRate) + I18n.t('perHour') : I18n.t('job.off'); hBadge.className = 'rate-preview-badge' + (holidayEnabled ? ' badge-active' : ' badge-off'); }
   }
 
   function _saveJob() {
@@ -510,15 +523,15 @@ const Modals = (() => {
       holidayFixedRate:  parseFloat(document.getElementById('jobHolidayFixed')?.value) || 0,
     };
 
-    if (!data.name) { showToast('Job name is required.', 'error'); document.getElementById('jobName')?.focus(); return; }
-    if (!data.baseWage || data.baseWage <= 0) { showToast('Please enter a valid hourly wage.', 'error'); document.getElementById('jobWage')?.focus(); return; }
+    if (!data.name) { showToast(I18n.t('job.nameReq'), 'error'); document.getElementById('jobName')?.focus(); return; }
+    if (!data.baseWage || data.baseWage <= 0) { showToast(I18n.t('job.wageReq'), 'error'); document.getElementById('jobWage')?.focus(); return; }
 
     if (_editingJobId) {
       Storage.updateJob(_editingJobId, data);
-      showToast('Job updated.', 'success');
+      showToast(I18n.t('job.updated'), 'success');
     } else {
       Storage.addJob(data);
-      showToast('Job added.', 'success');
+      showToast(I18n.t('job.added'), 'success');
     }
 
     _closeJobModal();
@@ -530,13 +543,13 @@ const Modals = (() => {
     const job = Storage.getJobById(_editingJobId);
     const shifts = Storage.getShiftsForJob(_editingJobId);
     const msg = shifts.length
-      ? `Delete "${job?.name}"? This will also remove ${shifts.length} associated shift${shifts.length !== 1 ? 's' : ''}. This cannot be undone.`
-      : `Delete "${job?.name}"? This cannot be undone.`;
+      ? I18n.t('job.deleteMsgShifts', { name: job?.name, n: shifts.length })
+      : I18n.t('job.deleteMsg', { name: job?.name });
 
-    showConfirm('Delete Job', msg).then(ok => {
+    showConfirm(I18n.t('job.deleteTitle'), msg).then(ok => {
       if (!ok) return;
       Storage.deleteJob(_editingJobId);
-      showToast('Job deleted.', 'info');
+      showToast(I18n.t('job.deleted'), 'info');
       _closeJobModal();
       App.refresh();
     });
@@ -578,17 +591,21 @@ const Modals = (() => {
   }
 
   /* ════════════════════════════════════════════
-     TEMPLATE MODAL
+     TEMPLATE MODAL (new + edit)
   ════════════════════════════════════════════ */
-  function openTemplateModal() {
+  let _editingTemplateId = null;
+
+  function openTemplateModal(tplId) {
     const modal = document.getElementById('templateModal');
     if (!modal) return;
+    const tpl = tplId ? Storage.getTemplateById(tplId) : null;
+    _editingTemplateId = tpl ? tpl.id : null;
 
     /* Populate job dropdown */
     const jobs = Storage.getJobs();
     const sel  = document.getElementById('tplJobId');
     if (sel) {
-      sel.innerHTML = '<option value="">Select job…</option>';
+      sel.innerHTML = `<option value="">${I18n.t('shift.selectJob')}</option>`;
       jobs.forEach(j => {
         const opt = document.createElement('option');
         opt.value = j.id;
@@ -597,48 +614,69 @@ const Modals = (() => {
       });
     }
 
-    /* Reset form */
-    const fields = ['tplName','tplStart','tplEnd','tplBreak'];
-    document.getElementById('tplName').value  = '';
-    document.getElementById('tplStart').value = '09:00';
-    document.getElementById('tplEnd').value   = '17:00';
-    document.getElementById('tplBreak').value = '0';
-    document.querySelectorAll('#tplDays input[type=checkbox]').forEach(cb => cb.checked = false);
+    /* Fill the form: saved values when editing, defaults when new */
+    document.getElementById('templateModalTitle').textContent = I18n.t(tpl ? 'tpl.modalEdit' : 'tpl.modalNew');
+    document.getElementById('tplName').value  = tpl ? tpl.name : '';
+    document.getElementById('tplJobId').value = tpl && jobs.some(j => j.id === tpl.jobId) ? tpl.jobId : (jobs[0]?.id || '');
+    document.getElementById('tplStart').value = tpl ? tpl.startTime : '09:00';
+    document.getElementById('tplEnd').value   = tpl ? tpl.endTime : '17:00';
+    document.getElementById('tplBreak').value = tpl ? String(tpl.breakMinutes || 0) : '0';
+    const days = tpl ? (tpl.daysOfWeek || []) : [];
+    document.querySelectorAll('#tplDays input[type=checkbox]').forEach(cb => { cb.checked = days.includes(parseInt(cb.value)); });
+    document.getElementById('deleteTemplateBtn').hidden = !tpl;
 
     modal.classList.add('active');
     _openOverlay();
+    if (!tpl) setTimeout(() => document.getElementById('tplName')?.focus(), 80);
   }
 
   function _closeTemplateModal() {
     document.getElementById('templateModal')?.classList.remove('active');
     _closeOverlay();
+    _editingTemplateId = null;
   }
 
   function _saveTemplate() {
     const name  = document.getElementById('tplName')?.value.trim();
     const jobId = document.getElementById('tplJobId')?.value;
-    if (!name || !jobId) { showToast('Template name and job are required.', 'error'); return; }
+    if (!name || !jobId) { showToast(I18n.t('tpl.required'), 'error'); return; }
 
-    const daysOfWeek = [...document.querySelectorAll('#tplDays input:checked')].map(cb => parseInt(cb.value));
-
-    Storage.addTemplate({
+    const data = {
       name,
       jobId,
       startTime:    document.getElementById('tplStart')?.value,
       endTime:      document.getElementById('tplEnd')?.value,
       breakMinutes: parseInt(document.getElementById('tplBreak')?.value) || 0,
-      daysOfWeek,
-    });
+      daysOfWeek:   [...document.querySelectorAll('#tplDays input:checked')].map(cb => parseInt(cb.value)),
+    };
+
+    const editing = !!_editingTemplateId;
+    if (editing) Storage.updateTemplate(_editingTemplateId, data);
+    else         Storage.addTemplate(data);
 
     _closeTemplateModal();
     App.refresh();
-    showToast('Template saved!', 'success');
+    showToast(I18n.t(editing ? 'tpl.updated' : 'tpl.saved'), 'success');
+  }
+
+  function _deleteTemplate() {
+    const id = _editingTemplateId;
+    if (!id) return;
+    document.getElementById('templateModal')?.classList.remove('active');
+    showConfirm(I18n.t('tpl.deleteTitle'), I18n.t('tpl.deleteMsg')).then(ok => {
+      if (!ok) { openTemplateModal(id); return; }   // back to the form
+      Storage.deleteTemplate(id);
+      _editingTemplateId = null;
+      App.refresh();
+      showToast(I18n.t('deleted'), 'info');
+    });
   }
 
   function _bindTemplateModal() {
     document.getElementById('templateModalClose')?.addEventListener('click', _closeTemplateModal);
     document.getElementById('templateCancelBtn')?.addEventListener('click', _closeTemplateModal);
     document.getElementById('saveTemplateBtn')?.addEventListener('click', _saveTemplate);
+    document.getElementById('deleteTemplateBtn')?.addEventListener('click', _deleteTemplate);
   }
 
   /* ════════════════════════════════════════════

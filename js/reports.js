@@ -5,6 +5,9 @@
 
 const Reports = (() => {
 
+  /* Exported files (PDF / Excel / CSV) are always English — jsPDF has no Japanese font */
+  const enHours = h => { let H = Math.floor(h), M = Math.round((h - H) * 60); if (M === 60) { H++; M = 0; } return M ? `${H}h ${M}m` : `${H}h`; };
+
   /* ── State ── */
   let _shifts   = [];
   let _year     = new Date().getFullYear();
@@ -51,7 +54,7 @@ const Reports = (() => {
 
     const jobs = Storage.getJobs();
     // Keep the first "All Jobs" option from HTML
-    sel.innerHTML = '<option value="">All Jobs</option>';
+    sel.innerHTML = `<option value="">${I18n.t('set.allJobs')}</option>`;
     jobs.forEach(j => {
       const opt       = document.createElement('option');
       opt.value       = j.id;
@@ -214,7 +217,7 @@ const Reports = (() => {
   ════════════════════════════════════════════ */
   function exportPDF() {
     if (!window.jspdf) {
-      Modals.showToast('PDF library not loaded yet, please try again.', 'error');
+      Modals.showToast(I18n.t('rep.pdfNotReady'), 'error');
       return;
     }
 
@@ -238,13 +241,13 @@ const Reports = (() => {
     doc.setFontSize(12);
     doc.setTextColor(100, 100, 100);
     doc.text(`Period: ${periodLabel}`, 14, 26);
-    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 32);
+    doc.text(`Generated: ${new Date().toLocaleDateString('en-US')}`, 14, 32);
 
     /* ─ Summary box ─ */
     doc.setFontSize(10);
     doc.setTextColor(40, 40, 40);
     const summaryLines = [
-      `Total Shifts: ${agg.count}    Total Hours: ${Income.formatHours(agg.hours)}`,
+      `Total Shifts: ${agg.count}    Total Hours: ${enHours(agg.hours)}`,
       `Gross Income: ${Income.formatCurrency(agg.gross)}    Net Income: ${Income.formatCurrency(agg.net)}`,
     ];
     doc.text(summaryLines, 14, 42);
@@ -260,7 +263,7 @@ const Reports = (() => {
         shift.date,
         DOW[dt.getDay()],
         job.name,
-        Income.formatHours(d.workedHours),
+        enHours(d.workedHours),
         Income.formatCurrency(d.rate) + '/hr',
         Income.formatCurrency(d.gross),
         d.deductions > 0 ? '−' + Income.formatCurrency(d.deductions) : '—',
@@ -294,7 +297,7 @@ const Reports = (() => {
 
     const filename = `shiftpay-${_year}${_month !== null ? `-${String(_month + 1).padStart(2,'0')}` : ''}.pdf`;
     doc.save(filename);
-    Modals.showToast('PDF downloaded!', 'success');
+    Modals.showToast(I18n.t('rep.pdfDone'), 'success');
   }
 
   /* ════════════════════════════════════════════
@@ -302,7 +305,7 @@ const Reports = (() => {
   ════════════════════════════════════════════ */
   function exportExcel() {
     if (!window.XLSX) {
-      Modals.showToast('Excel library not loaded yet, please try again.', 'error');
+      Modals.showToast(I18n.t('rep.xlsNotReady'), 'error');
       return;
     }
 
@@ -319,7 +322,7 @@ const Reports = (() => {
       ['Period', _month !== null
         ? new Date(_year, _month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
         : String(_year)],
-      ['Generated', new Date().toLocaleDateString()],
+      ['Generated', new Date().toLocaleDateString('en-US')],
       [],
       ['Total Shifts', agg.count],
       ['Total Hours',  parseFloat(agg.hours.toFixed(2))],
@@ -367,7 +370,7 @@ const Reports = (() => {
 
     const filename = `shiftpay-${_year}${_month !== null ? `-${String(_month + 1).padStart(2,'0')}` : ''}.xlsx`;
     XLSX.writeFile(wb, filename);
-    Modals.showToast('Excel file downloaded!', 'success');
+    Modals.showToast(I18n.t('rep.xlsDone'), 'success');
   }
 
   /* ════════════════════════════════════════════
@@ -413,7 +416,7 @@ const Reports = (() => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    Modals.showToast('CSV downloaded!', 'success');
+    Modals.showToast(I18n.t('rep.csvDone'), 'success');
   }
 
   /* ── Refresh year/job dropdowns when data changes ── */

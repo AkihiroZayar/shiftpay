@@ -17,7 +17,8 @@ const ShiftPush = (() => {
   const $ = id => document.getElementById(id);
   const getPrefs  = () => { try { return { on: false, lead: 30, ...JSON.parse(localStorage.getItem(KEY)) }; } catch { return { on: false, lead: 30 }; } };
   const savePrefs = p => localStorage.setItem(KEY, JSON.stringify(p));
-  const toast = (m, t) => (typeof Modals !== 'undefined' && Modals.showToast ? Modals.showToast(m, t) : console.log(m));
+  const t = (k, v) => I18n.t(k, v);
+  const toast = (m, ty) => (typeof Modals !== 'undefined' && Modals.showToast ? Modals.showToast(m, ty) : console.log(m));
 
   function b64ToUint8(b64) {
     const pad = '='.repeat((4 - b64.length % 4) % 4);
@@ -35,11 +36,11 @@ const ShiftPush = (() => {
         const start = new Date(`${s.date}T${s.startTime}:00`);
         const at = start.getTime() - lead * 60000;
         const job = jobs.get(s.jobId);
-        const leadText = lead >= 60 ? `${lead / 60} hour${lead > 60 ? 's' : ''}` : `${lead} min`;
+        const leadText = lead >= 60 ? t('push.hour', { n: lead / 60 }) : t('push.min', { n: lead });
         return {
           at: new Date(at).toISOString(),
-          title: `Shift in ${leadText} ⏰`,
-          body: `${job ? job.name : 'Shift'} · ${s.startTime}–${s.endTime}`,
+          title: t('push.title', { lead: leadText }),
+          body: `${job ? job.name : t('push.shift')} · ${s.startTime}–${s.endTime}`,
           tag: `shift-${s.id}`,
           _t: at,
         };
@@ -76,15 +77,15 @@ const ShiftPush = (() => {
   const syncSoon = () => { clearTimeout(timer); timer = setTimeout(() => sync().catch(console.error), 1500); };
 
   async function enable() {
-    if (isIos && !standalone) { toast('On iPhone, add ShiftPay to your Home Screen first (Share → Add to Home Screen).', 'info'); return false; }
+    if (isIos && !standalone) { toast(t('push.iosFirst'), 'info'); return false; }
     const perm = await Notification.requestPermission();
-    if (perm !== 'granted') { toast('Notifications are blocked in your browser settings.', 'error'); return false; }
+    if (perm !== 'granted') { toast(t('push.blocked'), 'error'); return false; }
     const reg = await navigator.serviceWorker.ready;
     const sub = (await reg.pushManager.getSubscription()) ||
       await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToUint8(VAPID) });
     savePrefs({ ...getPrefs(), on: true });
     await sync();
-    toast('Shift reminders on.', 'success');
+    toast(t('push.on'), 'success');
     return true;
   }
 
@@ -95,7 +96,7 @@ const ShiftPush = (() => {
       await post({ action: 'unsubscribe', endpoint: sub.endpoint }).catch(() => {});
       await sub.unsubscribe().catch(() => {});
     }
-    toast('Shift reminders off.', 'info');
+    toast(t('push.off'), 'info');
   }
 
   function render() {
@@ -108,9 +109,10 @@ const ShiftPush = (() => {
     $('pushLead').disabled = !p.on;
     toggle.checked = p.on;
     toggle.disabled = !supported && !isIos;
-    if (!supported && !isIos) hint.textContent = 'This browser does not support notifications.';
-    else if (isIos && !standalone) hint.textContent = 'On iPhone: add ShiftPay to your Home Screen (Share → Add to Home Screen), open it from there, then turn this on.';
-    else if ('Notification' in window && Notification.permission === 'denied') hint.textContent = 'Notifications are blocked — allow them in your browser settings.';
+    if (!supported && !isIos) hint.textContent = t('push.noSupport');
+    else if (isIos && !standalone) hint.textContent = t('push.iosHint');
+    else if ('Notification' in window && Notification.permission === 'denied') hint.textContent = t('push.blockedHint');
+    else hint.textContent = t('set.remindHint');
   }
 
   function init() {
@@ -123,7 +125,7 @@ const ShiftPush = (() => {
         else await disable();
       } catch (err) {
         console.error(err);
-        toast('Could not change reminders. Check your connection.', 'error');
+        toast(t('push.fail'), 'error');
         e.target.checked = getPrefs().on;
       }
       render();
@@ -131,9 +133,11 @@ const ShiftPush = (() => {
     $('pushLead').addEventListener('change', e => {
       savePrefs({ ...getPrefs(), lead: Number(e.target.value) || 30 });
       syncSoon();
-      toast('Saved.', 'success');
+      toast(t('saved'), 'success');
     });
     // Re-send reminders whenever shifts or jobs change, and on every app open
+    // New language → re-send reminder texts in that language, and refresh the hint
+    window.addEventListener('sp:lang', () => { render(); syncSoon(); });
     window.addEventListener('sp:change', e => { if (e.detail === 'sp_shifts' || e.detail === 'sp_jobs') syncSoon(); });
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncSoon(); });
     syncSoon();
