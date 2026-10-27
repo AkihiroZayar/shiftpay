@@ -15,7 +15,7 @@
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Myanmar:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
@@ -302,6 +302,18 @@
         </div>
       </section>
 
+      <section class="block" id="helpBlock">
+        <div class="block-head">
+          <h2 class="block-title" data-i18n="help.title">About &amp; how to use</h2>
+        </div>
+        <div class="segmented segmented-sm help-lang" id="helpLang" role="group" aria-label="Language">
+          <button type="button" data-help-lang="en">English</button>
+          <button type="button" data-help-lang="ja">日本語</button>
+          <button type="button" data-help-lang="my">မြန်မာ</button>
+        </div>
+        <div class="help-body" id="helpBody"></div>
+      </section>
+
       <a class="discord-ad" data-discord href="#" target="_blank" rel="noopener">
         <span class="discord-ad-emoji" aria-hidden="true">🦝</span>
         <span class="discord-ad-text">
@@ -527,6 +539,19 @@
 
 <div class="toasts" id="toastContainer" aria-live="polite"></div>
 
+<!-- New version ready (shown by js/pwa.js) -->
+<div class="update-card" id="updateCard" role="alertdialog" aria-labelledby="updateTitle" aria-describedby="updateText" hidden>
+  <div class="update-icon" aria-hidden="true">🎉</div>
+  <div class="update-text">
+    <strong id="updateTitle" data-i18n="upd.title">New update released</strong>
+    <span id="updateText" data-i18n="upd.text">Please restart ShiftPay to use the new version.</span>
+  </div>
+  <div class="update-actions">
+    <button type="button" class="btn btn-ghost btn-sm" id="updateLater" data-i18n="upd.later">Later</button>
+    <button type="button" class="btn btn-primary btn-sm" id="updateRestart" data-i18n="upd.restart">Restart now</button>
+  </div>
+</div>
+
 <!-- SCRIPTS -->
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
@@ -544,6 +569,7 @@
 <script src="js/modals.js"></script>
 <script src="js/push.js"></script>
 <script src="js/cloud.js"></script>
+<script src="js/help.js"></script>
 <script src="js/pwa.js"></script>
 <script src="js/app.js"></script>
 </body>
