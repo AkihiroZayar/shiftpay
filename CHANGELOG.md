@@ -3,6 +3,13 @@
 All notable changes to **ShiftPay** are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.8.0] — 2026-10-27
+
+- **Update notice.** When a new version of ShiftPay is ready, a card pops up: *New update released — please restart* with a **Restart now** button (or *Later*). No more closing and reopening the app to get updates.
+- ShiftPay now checks for updates when it opens, when you come back to it, and every 30 minutes.
+- **About & how to use** in Settings, in **English / 日本語 / မြန်မာ** — what ShiftPay is, where your data is kept, and 8 short steps for using the app. Pick the language with the tabs; it follows the app language by default.
+- Service worker: new versions now always download fresh files (bypassing the browser cache). Cache bumped to `shiftpay-v5`.
+
 ## [1.7.0] — 2026-10-26
 
 - **English / 日本語.** Settings → *Appearance* → *Language*. The whole app (menus, forms, messages, calendar, reminders) switches instantly; your choice is saved on this device, and the first visit follows your phone's language. Exported reports (PDF, Excel, CSV) stay in English.

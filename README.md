@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.7.0-1E3A8A" alt="version 1.7.0">
+  <img src="https://img.shields.io/badge/version-1.8.0-1E3A8A" alt="version 1.8.0">
   <img src="https://img.shields.io/badge/vanilla-JavaScript-00A8CC" alt="Vanilla JS">
   <img src="https://img.shields.io/badge/PWA-installable-1E3A8A" alt="PWA">
 </p>
@@ -24,6 +24,8 @@
 - **Home** — One big number for this Week / Month / Year, take-home pay, monthly goal and 年収の壁 (yearly limit) progress
 - **Repeating shifts** — Save a weekly pattern, fill a whole month in one tap (with Undo), tap a pattern to edit it
 - **English / 日本語** — switch the language in Settings → Appearance
+- **About & how to use** — in English, 日本語 and မြန်မာ (Settings)
+- **Update notice** — a "New update released — Restart now" card when a new version is ready
 - **Tax & fees** — Monthly amounts for 所得税, 住民税, 健康保険, 年金, 雇用保険, transport and custom fees
 - **Export** — Filter by year, month, and job; export to PDF, Excel, or CSV
 - **Details** — Income by job and an income chart, folded away until you need them
@@ -44,6 +46,8 @@ shiftpay/
 ├── js/
 │   ├── version.js       App version (APP_VERSION)
 │   ├── i18n.js          UI language: English / 日本語
+│   ├── help.js          About & how to use (EN / JA / MY)
+│   ├── pwa.js           Service worker, install button, update notice
 │   ├── holidays.js      Japanese public holiday engine
 │   ├── storage.js       LocalStorage CRUD layer
 │   ├── income.js        Calculation engine (rates, tax, projections)
@@ -141,7 +145,7 @@ This project uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH
 - The version lives in **`js/version.js`** (`APP_VERSION`) and is shown in **Settings → About**.
 - To release: bump the version, add an entry to [`CHANGELOG.md`](CHANGELOG.md), then create a GitHub Release tagged `vX.Y.Z`.
 
-Current version: **v1.7.0** — see the [changelog](CHANGELOG.md).
+Current version: **v1.8.0** — see the [changelog](CHANGELOG.md).
 
 ## 💬 Community
 

@@ -2,13 +2,14 @@
  * AkihiroLabs — ShiftPay — service worker
  * Bump CACHE whenever you change files so installed apps pick up the update.
  */
-const CACHE = 'shiftpay-v4';
+const CACHE = 'shiftpay-v5';
 const SHELL = [
   './',
   './index.html',
   './css/main.css',
   './js/version.js',
   './js/i18n.js',
+  './js/help.js',
   './js/holidays.js',
   './js/storage.js',
   './js/income.js',
@@ -31,8 +32,16 @@ const SHELL = [
 const CDN_HOSTS = ['cdn.jsdelivr.net', 'cdnjs.cloudflare.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  // cache: 'reload' skips the browser's HTTP cache, so the new version gets the new files
+  e.waitUntil(
+    caches.open(CACHE)
+      .then(c => c.addAll(SHELL.map(u => new Request(u, { cache: 'reload' }))))
+      .then(() => self.skipWaiting())
+  );
 });
+
+// The page can ask a waiting worker to take over right away
+self.addEventListener('message', e => { if (e.data === 'skipWaiting') self.skipWaiting(); });
 
 self.addEventListener('activate', e => {
   e.waitUntil(
@@ -42,6 +51,7 @@ self.addEventListener('activate', e => {
   );
 });
 
+// Only read from this version's cache — right after an update the old cache may still exist for a moment
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
@@ -52,7 +62,7 @@ self.addEventListener('fetch', e => {
     e.respondWith(
       fetch(req)
         .then(res => { const copy = res.clone(); caches.open(CACHE).then(c => c.put('./index.html', copy)); return res; })
-        .catch(() => caches.match('./index.html'))
+        .catch(() => caches.open(CACHE).then(c => c.match('./index.html')))
     );
     return;
   }
@@ -60,7 +70,7 @@ self.addEventListener('fetch', e => {
   // CDN files: cache first
   if (CDN_HOSTS.includes(url.hostname)) {
     e.respondWith(
-      caches.match(req).then(hit => hit || fetch(req).then(res => {
+      caches.open(CACHE).then(c => c.match(req)).then(hit => hit || fetch(req).then(res => {
         if (res && (res.ok || res.type === 'opaque')) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
         return res;
       }))
@@ -71,7 +81,7 @@ self.addEventListener('fetch', e => {
   // Own files: serve cache instantly, refresh it in the background
   if (url.origin === self.location.origin) {
     e.respondWith(
-      caches.match(req).then(hit => {
+      caches.open(CACHE).then(c => c.match(req)).then(hit => {
         const net = fetch(req).then(res => {
           if (res && res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
           return res;
