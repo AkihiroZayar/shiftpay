@@ -412,7 +412,7 @@ const App = (() => {
     $('dataStats').textContent = t('set.dataStats', { jobs: t('jobsN', { n: jobs }), shifts: nShifts(shifts) });
 
     $('darkModeToggle').checked = document.documentElement.dataset.theme === 'dark';
-    $('aboutLine').textContent  = `ShiftPay v${typeof APP_VERSION !== 'undefined' ? APP_VERSION : ''} · 🦝 AkihiroLabs`;
+    $('aboutLine').textContent  = `ShiftPay v${typeof APP_VERSION !== 'undefined' ? APP_VERSION : ''}`;
   }
 
   function _markLimitPreset(value) {

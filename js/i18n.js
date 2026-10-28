@@ -15,7 +15,7 @@ const I18n = (() => {
     en: {
       /* Navigation */
       'nav.home': 'Home', 'nav.calendar': 'Calendar', 'nav.jobs': 'Jobs', 'nav.settings': 'Settings',
-      'discord.mini': '💬 Join our Discord',
+      'discord.mini': 'Join our Discord',
       'addShift': 'Add shift',
       'hi': 'Hi, {name}',
 
@@ -135,6 +135,15 @@ const I18n = (() => {
       'set.install': 'Install ShiftPay', 'set.installHint': 'Add it to your home screen like a normal app', 'set.installBtn': 'Install',
       'set.appearance': 'Appearance', 'set.darkMode': 'Dark mode', 'set.language': 'Language',
       'help.title': 'About & how to use',
+      'help.updated': 'Updated to v{v}', 'help.seeNew': 'What’s new',
+      'on': 'On', 'set.dark': 'Dark',
+      'set.useTax': 'Show take-home pay', 'set.remindOn': 'Turn on reminders',
+      'set.ds.local': 'Saved on this device',
+      'set.ds.localHint': 'Sign in under Account & sync to keep a copy in the cloud.',
+      'set.ds.synced': 'Synced · {email} · {when}',
+      'set.ds.notYet': 'Signed in · {email} · syncing…',
+      'set.ds.failed': 'Sync failed — will retry',
+      'set.ds.justNow': 'just now',
       'upd.title': 'New update released', 'upd.titleV': 'New update released (v{v})',
       'upd.text': 'Please restart ShiftPay to use the new version.',
       'upd.restart': 'Restart now', 'upd.later': 'Later',
@@ -186,7 +195,7 @@ const I18n = (() => {
 
     ja: {
       'nav.home': 'ホーム', 'nav.calendar': 'カレンダー', 'nav.jobs': '仕事', 'nav.settings': '設定',
-      'discord.mini': '💬 Discordに参加',
+      'discord.mini': 'Discordに参加',
       'addShift': 'シフト追加',
       'hi': 'こんにちは、{name}さん',
 
@@ -298,6 +307,15 @@ const I18n = (() => {
       'set.install': 'ShiftPayをインストール', 'set.installHint': 'ホーム画面に追加して、アプリのように使えます', 'set.installBtn': 'インストール',
       'set.appearance': '表示', 'set.darkMode': 'ダークモード', 'set.language': '言語',
       'help.title': 'アプリについて・使い方',
+      'help.updated': 'v{v}にアップデートしました', 'help.seeNew': '新機能を見る',
+      'on': 'オン', 'set.dark': 'ダーク',
+      'set.useTax': '手取りを表示', 'set.remindOn': 'リマインダーをオン',
+      'set.ds.local': 'この端末に保存中',
+      'set.ds.localHint': '「アカウントと同期」でサインインすると、クラウドにも保存されます。',
+      'set.ds.synced': '同期済み · {email} · {when}',
+      'set.ds.notYet': 'サインイン中 · {email} · 同期中…',
+      'set.ds.failed': '同期に失敗しました。あとで再試行します',
+      'set.ds.justNow': 'たった今',
       'upd.title': '新しいアップデートがあります', 'upd.titleV': '新しいアップデートがあります（v{v}）',
       'upd.text': '新しいバージョンを使うには、ShiftPayを再起動してください。',
       'upd.restart': '今すぐ再起動', 'upd.later': 'あとで',
