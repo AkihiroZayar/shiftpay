@@ -249,7 +249,7 @@ button.item:hover, button.item:hover + .item { background-image: none; }
 
 /* Empty state */
 .empty { text-align: center; padding: 64px 16px; }
-.empty-mascot { font-size: 48px; line-height: 1; margin-bottom: 16px; }
+.empty-mascot { display: block; width: 64px; height: 64px; margin: 0 auto 16px; }
 .empty h2 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
 .empty p { color: var(--text-secondary); max-width: 320px; margin: 0 auto 20px; }
 .empty-sm { padding: 16px 0; text-align: left; }
@@ -606,7 +606,7 @@ input[type=number]::-webkit-inner-spin-button { opacity: .4; }
   background: var(--bg); color: var(--text-primary); box-shadow: 0 12px 40px rgba(15, 23, 42, .22);
 }
 .update-card.show { opacity: 1; transform: translate(-50%, 0); }
-.update-icon { font-size: 26px; line-height: 1; grid-row: span 2; }
+.update-icon { width: 40px; height: 40px; grid-row: span 2; }
 .update-text { display: flex; flex-direction: column; gap: 2px; }
 .update-text strong { font-size: 15px; font-weight: 600; }
 .update-text span { font-size: 13px; color: var(--text-muted); }
@@ -616,7 +616,6 @@ input[type=number]::-webkit-inner-spin-button { opacity: .4; }
 }
 
 /* ── v1.8: About & how to use ── */
-.help-lang { margin-bottom: 14px; }
 .help-lang button { min-width: 72px; }
 .help-lang button[data-help-lang="my"] { font-family: 'Noto Sans Myanmar', 'Inter', sans-serif; }
 .help-body { font-size: 14px; line-height: 1.65; color: var(--text-secondary); }
@@ -628,4 +627,110 @@ input[type=number]::-webkit-inner-spin-button { opacity: .4; }
 .help-steps li::marker { color: var(--accent); font-weight: 600; }
 .help-steps strong { display: block; color: var(--text-primary); font-weight: 600; }
 .help-note { margin: 14px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--accent-soft); color: var(--accent); font-size: 13px; }
-.help-ver { margin: 10px 0 0; font-size: 12px; color: var(--text-muted); }
+
+/* ═══════════ v1.9: Settings — folding sections, help window, Byte logo ═══════════ */
+.byte-logo { display: inline-block; object-fit: contain; flex-shrink: 0; }
+.byte-xs { width: 16px; height: 16px; vertical-align: -3px; }
+.side-foot { display: flex; align-items: center; gap: 6px; }
+.discord-mini { display: flex; align-items: center; gap: 8px; }
+.discord-mini svg { width: 16px; height: 16px; }
+
+/* Data status line */
+.data-status {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  margin: 0 0 16px; padding: 10px 14px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface); color: var(--text-secondary);
+  font-size: 13px; text-align: left; cursor: pointer;
+}
+.data-status:hover { border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); }
+.ds-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); flex-shrink: 0; }
+.ds-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.data-status[data-state="synced"] .ds-dot { background: var(--success); }
+.data-status[data-state="syncing"] .ds-dot { background: var(--cyan); }
+.data-status[data-state="error"] .ds-dot { background: var(--danger); }
+
+/* Folding sections */
+.set-list { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.set-fold { display: block; width: 100%; background: var(--bg); }
+.set-fold + .set-fold { border-top: 1px solid var(--border); }
+.set-fold > summary, .set-link {
+  list-style: none; cursor: pointer;
+  display: flex; align-items: center; gap: 12px;
+  min-height: 56px; padding: 10px 14px;
+  font: inherit; color: var(--text-primary); text-align: left;
+  border: 0; background: none; width: 100%;
+}
+.set-link { border-top: 1px solid var(--border); }
+.set-fold > summary::-webkit-details-marker { display: none; }
+.set-fold > summary:hover, .set-link:hover { background: var(--surface); }
+.set-fold > summary:focus-visible, .set-link:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.set-ico {
+  width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
+  display: grid; place-items: center;
+  background: var(--accent-soft); color: var(--accent);
+}
+.set-ico svg { width: 18px; height: 18px; }
+[data-theme="dark"] .set-ico { color: #8FB0FF; }
+.set-name { flex: 1; min-width: 0; font-size: 15px; font-weight: 600; }
+.set-val { font-size: 13px; color: var(--text-muted); white-space: nowrap; }
+.set-val.is-on { color: var(--success); font-weight: 600; }
+.set-fold .chev { width: 18px; height: 18px; color: var(--text-muted); transition: transform .2s; }
+.set-fold[open] > summary .chev { transform: rotate(180deg); }
+.set-fold[open] > summary { background: var(--surface); }
+.set-body { padding: 8px 16px 18px 58px; }
+.set-body > .block-hint:first-child { margin-top: 4px; }
+.row-top { padding-top: 4px; }
+@media (max-width: 899px) {
+  .set-body { padding: 8px 14px 18px; }
+}
+
+/* Discord (slim row) */
+.discord-row {
+  display: flex; align-items: center; gap: 12px;
+  margin-top: 16px; padding: 10px 14px;
+  border-radius: var(--radius); text-decoration: none;
+  background: var(--accent); color: #fff;
+}
+.discord-row:hover { opacity: .95; }
+.discord-row .byte-logo { width: 32px; height: 32px; background: #fff; border-radius: 50%; padding: 2px; }
+.discord-row-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.discord-row-text strong { font-size: 14px; font-weight: 600; }
+.discord-row-text small { font-size: 12px; color: rgba(255,255,255,.8); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.discord-row-btn { font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 99px; background: var(--cyan); color: #fff; flex-shrink: 0; }
+[data-theme="dark"] .discord-row { background: #1E3A8A; }
+.about { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 16px 0 8px; }
+
+/* Help window */
+.modal-help { height: min(640px, calc(100vh - 48px)); }
+.help-bar { display: flex; flex-direction: column; gap: 10px; padding: 8px 24px 12px; border-bottom: 1px solid var(--border); }
+.help-tabs { display: flex; gap: 4px; }
+.help-tabs button {
+  flex: 1; padding: 8px 6px; border: 0; border-bottom: 2px solid transparent;
+  background: none; color: var(--text-muted); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.help-tabs button.active { color: var(--accent); border-bottom-color: var(--accent); }
+[data-theme="dark"] .help-tabs button.active { color: #8FB0FF; border-bottom-color: #8FB0FF; }
+.help-tabs.help-my button { font-family: 'Noto Sans Myanmar', 'Inter', sans-serif; font-size: 13px; }
+.modal-help .help-body { flex: 1; display: block; padding-top: 16px; padding-bottom: 16px; }
+.help-hero { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.help-hero div { display: flex; flex-direction: column; }
+.help-hero strong { font-size: 18px; color: var(--text-primary); }
+.help-hero span { font-size: 13px; color: var(--text-muted); }
+.help-news + .help-news { margin-top: 18px; }
+.help-news .help-head { display: flex; align-items: center; gap: 8px; margin-top: 0; }
+.help-news ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.help-news li::marker { color: var(--accent); }
+.help-foot {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 24px 14px; border-top: 1px solid var(--border);
+  font-size: 12px; color: var(--text-muted);
+}
+@media (max-width: 899px) {
+  .modal-help { height: 88vh; max-height: 88vh; }
+  .help-bar { padding: 8px 16px 12px; }
+  .modal-help .help-body { padding-left: 18px; padding-right: 18px; }
+}
+/* Toasts: use the screen width before wrapping (long Japanese messages) */
+.toasts { width: max-content; max-width: calc(100vw - 32px); }
+.toast { border-radius: 18px; }

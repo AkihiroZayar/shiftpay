@@ -182,6 +182,7 @@ const ShiftCloud = (() => {
 
   /* ── Settings → Account block ── */
   function render() {
+    window.dispatchEvent(new CustomEvent('sp:cloud'));   // Settings → data status line
     const box = $('accountBody');
     if (!box) return;
     const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -298,5 +299,9 @@ const ShiftCloud = (() => {
   }
 
   document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', init) : init();
-  return { sync, get signedIn() { return !!user; } };
+  function status() {
+    return { available: !!sb, signedIn: !!user, email: user?.email || '', lastSync: getSync()?.lastSync || null, error: !!lastError };
+  }
+
+  return { sync, status, get signedIn() { return !!user; } };
 })();

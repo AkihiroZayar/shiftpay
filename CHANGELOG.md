@@ -3,6 +3,17 @@
 All notable changes to **ShiftPay** are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.9.0] — 2026-10-28
+
+- **Shorter Settings.** Every section is now one row with an icon — tap it to open, and only one stays open at a time. Rows show a quick value (Tax & fees *On/Off*, Shift reminders *On/Off*, Appearance *language · Dark*).
+- **About & how to use** opens in its own window with three tabs: **About · How to use · What's new**, still in English / 日本語 / မြန်မာ.
+- **What's new** lists the last few versions. After an update, a short "Updated to v1.9.0 — What's new" message appears once.
+- **Data status** at the top of Settings: *Saved on this device*, or *Synced · your email · 2 min ago* when signed in. Tap it to open Account & sync.
+- **Slimmer Discord banner** at the bottom of Settings.
+- **Byte logo.** The AkihiroLabs raccoon emoji is replaced with the real Byte logo from akihirolabs.com (`byte.svg`) — empty state, sidebar, Settings, update card and help window.
+- Long messages (e.g. in Japanese) no longer squeeze into a narrow bubble.
+- Service worker cache bumped to `shiftpay-v6`.
+
 ## [1.8.0] — 2026-10-27
 
 - **Update notice.** When a new version of ShiftPay is ready, a card pops up: *New update released — please restart* with a **Restart now** button (or *Later*). No more closing and reopening the app to get updates.

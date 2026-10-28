@@ -51,8 +51,8 @@
       </a>
     </nav>
 
-    <a class="discord-mini" data-discord href="#" target="_blank" rel="noopener" data-i18n="discord.mini">💬 Join our Discord</a>
-    <p class="side-foot">🦝 AkihiroLabs</p>
+    <a class="discord-mini" data-discord href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/></svg><span data-i18n="discord.mini">Join our Discord</span></a>
+    <p class="side-foot"><img class="byte-logo byte-xs" src="byte.svg" alt="" width="16" height="16"> AkihiroLabs</p>
   </aside>
 
   <!-- ═══════════ MAIN ═══════════ -->
@@ -70,7 +70,7 @@
 
       <!-- Empty state (no jobs / no shifts yet) -->
       <div class="empty" id="homeEmpty" hidden>
-        <div class="empty-mascot">🦝</div>
+        <img class="empty-mascot byte-logo" src="byte.svg" alt="" width="64" height="64">
         <h2 id="homeEmptyTitle">No shifts yet</h2>
         <p id="homeEmptyText">Add your first shift and your earnings will show up here.</p>
         <button class="btn btn-primary" id="homeEmptyBtn">Add your first shift</button>
@@ -165,13 +165,33 @@
     <!-- ─── SETTINGS ─── -->
     <section class="view" id="view-settings">
 
-      <section class="block" id="accountBlock">
-        <h2 class="block-title" data-i18n="set.account">Account &amp; sync</h2>
-        <div id="accountBody"></div>
-      </section>
+      <!-- Where the data is kept (updated by cloud.js) -->
+      <button type="button" class="data-status" id="dataStatus">
+        <span class="ds-dot" aria-hidden="true"></span>
+        <span class="ds-text" id="dataStatusText" data-i18n="set.ds.local">Saved on this device</span>
+      </button>
 
-      <section class="block">
-        <h2 class="block-title" data-i18n="set.profile">Profile &amp; goals</h2>
+      <!-- Each section folds; only one is open at a time (name="settings") -->
+      <div class="set-list">
+
+      <details class="set-fold" name="settings" id="accountBlock">
+        <summary>
+          <span class="set-ico"><svg viewBox="0 0 24 24"><path d="M17.5 19a4.5 4.5 0 1 0-1.3-8.8A6 6 0 0 0 4.6 12.6 3.3 3.3 0 0 0 6.5 19z"/></svg></span>
+          <span class="set-name" data-i18n="set.account">Account &amp; sync</span>
+          <span class="set-val" id="accountVal"></span>
+          <svg class="chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+        </summary>
+        <div class="set-body"><div id="accountBody"></div></div>
+      </details>
+
+      <details class="set-fold" name="settings">
+        <summary>
+          <span class="set-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg></span>
+          <span class="set-name" data-i18n="set.profile">Profile &amp; goals</span>
+          <span class="set-val"></span>
+          <svg class="chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+        </summary>
+        <div class="set-body">
         <div class="rows">
           <label class="row">
             <span class="row-label" data-i18n="set.name">Your name</span>
@@ -193,23 +213,99 @@
             <button type="button" class="chip" data-limit="0" data-i18n="off">Off</button>
           </div>
         </div>
-      </section>
+        </div>
+      </details>
 
-      <section class="block">
-        <div class="block-head">
-          <h2 class="block-title" data-i18n="set.tax">Tax &amp; fees</h2>
-          <label class="switch" title="Enable deductions" data-i18n-title="set.taxToggle">
+      <details class="set-fold" name="settings">
+        <summary>
+          <span class="set-ico"><svg viewBox="0 0 24 24"><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg></span>
+          <span class="set-name" data-i18n="set.tax">Tax &amp; fees</span>
+          <span class="set-val" data-val-switch="taxEnabled"></span>
+          <svg class="chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+        </summary>
+        <div class="set-body">
+        <label class="row row-top">
+          <span class="row-label" data-i18n="set.useTax">Show take-home pay</span>
+          <span class="switch" title="Enable deductions" data-i18n-title="set.taxToggle">
             <input type="checkbox" id="taxEnabled">
             <span class="switch-track"></span>
-          </label>
-        </div>
+          </span>
+        </label>
         <p class="block-hint" data-i18n="set.taxHint">Monthly amounts taken from your pay. When on, Home shows your take-home pay.</p>
         <div id="taxItemsList"></div>
         <p class="tax-total" id="taxTotal"></p>
-      </section>
+        </div>
+      </details>
 
-      <section class="block">
-        <h2 class="block-title" data-i18n="set.export">Export report</h2>
+      <details class="set-fold" name="settings" id="notifyBlock">
+        <summary>
+          <span class="set-ico"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg></span>
+          <span class="set-name" data-i18n="set.reminders">Shift reminders</span>
+          <span class="set-val" data-val-switch="pushToggle"></span>
+          <svg class="chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+        </summary>
+        <div class="set-body">
+        <label class="row row-top">
+          <span class="row-label" data-i18n="set.remindOn">Turn on reminders</span>
+          <span class="switch" title="Shift reminders" data-i18n-title="set.reminders">
+            <input type="checkbox" id="pushToggle">
+            <span class="switch-track"></span>
+          </span>
+        </label>
+        <p class="block-hint" id="pushHint" data-i18n="set.remindHint">Get a notification before each upcoming shift — even when ShiftPay is closed.</p>
+        <div class="rows">
+          <label class="row">
+            <span class="row-label" data-i18n="set.remindMe">Remind me</span>
+            <select class="input input-w" id="pushLead">
+              <option value="15" data-i18n="set.lead15">15 min before</option>
+              <option value="30" data-i18n="set.lead30">30 min before</option>
+              <option value="60" data-i18n="set.lead60">1 hour before</option>
+              <option value="120" data-i18n="set.lead120">2 hours before</option>
+            </select>
+          </label>
+          <div class="row" data-install hidden>
+            <span class="row-label"><span data-i18n="set.install">Install ShiftPay</span><small data-i18n="set.installHint">Add it to your home screen like a normal app</small></span>
+            <button class="btn btn-ghost btn-sm" type="button" data-i18n="set.installBtn">Install</button>
+          </div>
+        </div>
+        </div>
+      </details>
+
+      <details class="set-fold" name="settings">
+        <summary>
+          <span class="set-ico"><svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></span>
+          <span class="set-name" data-i18n="set.appearance">Appearance</span>
+          <span class="set-val" id="appearanceVal"></span>
+          <svg class="chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+        </summary>
+        <div class="set-body">
+        <div class="rows">
+          <div class="row">
+            <span class="row-label" data-i18n="set.language">Language</span>
+            <span class="segmented segmented-sm" id="langSwitch" role="group" aria-label="Language">
+              <button type="button" data-lang="en">English</button>
+              <button type="button" data-lang="ja">日本語</button>
+            </span>
+          </div>
+          <label class="row">
+            <span class="row-label" data-i18n="set.darkMode">Dark mode</span>
+            <span class="switch">
+              <input type="checkbox" id="darkModeToggle">
+              <span class="switch-track"></span>
+            </span>
+          </label>
+        </div>
+        </div>
+      </details>
+
+      <details class="set-fold" name="settings">
+        <summary>
+          <span class="set-ico"><svg viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M12 12v6M9 15l3 3 3-3"/></svg></span>
+          <span class="set-name" data-i18n="set.export">Export report</span>
+          <span class="set-val"></span>
+          <svg class="chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+        </summary>
+        <div class="set-body">
         <p class="block-hint" data-i18n="set.exportHint">Reports (PDF, Excel, CSV) are made in English.</p>
         <div class="rows">
           <div class="row row-wrap">
@@ -233,10 +329,17 @@
             <button class="btn btn-ghost btn-sm" id="exportCSV">CSV</button>
           </div>
         </div>
-      </section>
+        </div>
+      </details>
 
-      <section class="block">
-        <h2 class="block-title" data-i18n="set.data">Data</h2>
+      <details class="set-fold" name="settings">
+        <summary>
+          <span class="set-ico"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5.5" rx="8" ry="2.8"/><path d="M4 5.5v13c0 1.5 3.6 2.8 8 2.8s8-1.3 8-2.8v-13"/><path d="M4 12c0 1.5 3.6 2.8 8 2.8s8-1.3 8-2.8"/></svg></span>
+          <span class="set-name" data-i18n="set.data">Data</span>
+          <span class="set-val"></span>
+          <svg class="chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+        </summary>
+        <div class="set-body">
         <div class="rows">
           <div class="row">
             <span class="row-label"><span data-i18n="set.backup">Backup</span><small id="dataStats"></small></span>
@@ -254,76 +357,30 @@
             <button class="btn btn-danger-ghost btn-sm" id="clearDataBtn" data-i18n="set.clearBtn">Clear</button>
           </div>
         </div>
-      </section>
+        </div>
+      </details>
 
-      <section class="block" id="notifyBlock">
-        <div class="block-head">
-          <h2 class="block-title" data-i18n="set.reminders">Shift reminders</h2>
-          <label class="switch" title="Shift reminders" data-i18n-title="set.reminders">
-            <input type="checkbox" id="pushToggle">
-            <span class="switch-track"></span>
-          </label>
-        </div>
-        <p class="block-hint" id="pushHint" data-i18n="set.remindHint">Get a notification before each upcoming shift — even when ShiftPay is closed.</p>
-        <div class="rows">
-          <label class="row">
-            <span class="row-label" data-i18n="set.remindMe">Remind me</span>
-            <select class="input input-w" id="pushLead">
-              <option value="15" data-i18n="set.lead15">15 min before</option>
-              <option value="30" data-i18n="set.lead30">30 min before</option>
-              <option value="60" data-i18n="set.lead60">1 hour before</option>
-              <option value="120" data-i18n="set.lead120">2 hours before</option>
-            </select>
-          </label>
-          <div class="row" data-install hidden>
-            <span class="row-label"><span data-i18n="set.install">Install ShiftPay</span><small data-i18n="set.installHint">Add it to your home screen like a normal app</small></span>
-            <button class="btn btn-ghost btn-sm" type="button" data-i18n="set.installBtn">Install</button>
-          </div>
-        </div>
-      </section>
+      <!-- About & how to use → opens the help window -->
+      <button type="button" class="set-fold set-link" id="helpOpen">
+        <span class="set-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16.5v-5M12 7.8h.01"/></svg></span>
+        <span class="set-name" data-i18n="help.title">About &amp; how to use</span>
+        <span class="set-val"></span>
+        <svg class="chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>
+      </button>
 
-      <section class="block">
-        <h2 class="block-title" data-i18n="set.appearance">Appearance</h2>
-        <div class="rows">
-          <div class="row">
-            <span class="row-label" data-i18n="set.language">Language</span>
-            <span class="segmented segmented-sm" id="langSwitch" role="group" aria-label="Language">
-              <button type="button" data-lang="en">English</button>
-              <button type="button" data-lang="ja">日本語</button>
-            </span>
-          </div>
-          <label class="row">
-            <span class="row-label" data-i18n="set.darkMode">Dark mode</span>
-            <span class="switch">
-              <input type="checkbox" id="darkModeToggle">
-              <span class="switch-track"></span>
-            </span>
-          </label>
-        </div>
-      </section>
+      </div>
 
-      <section class="block" id="helpBlock">
-        <div class="block-head">
-          <h2 class="block-title" data-i18n="help.title">About &amp; how to use</h2>
-        </div>
-        <div class="segmented segmented-sm help-lang" id="helpLang" role="group" aria-label="Language">
-          <button type="button" data-help-lang="en">English</button>
-          <button type="button" data-help-lang="ja">日本語</button>
-          <button type="button" data-help-lang="my">မြန်မာ</button>
-        </div>
-        <div class="help-body" id="helpBody"></div>
-      </section>
-
-      <a class="discord-ad" data-discord href="#" target="_blank" rel="noopener">
-        <span class="discord-ad-emoji" aria-hidden="true">🦝</span>
-        <span class="discord-ad-text">
+      <!-- AkihiroLabs Discord (slim) -->
+      <a class="discord-row" data-discord href="#" target="_blank" rel="noopener">
+        <img class="byte-logo" src="byte.svg" alt="" width="32" height="32">
+        <span class="discord-row-text">
           <strong data-i18n="set.discordTitle">Join the AkihiroLabs Discord</strong>
           <small data-i18n="set.discordSub">Updates, feedback and new apps from AkihiroLabs.</small>
         </span>
-        <span class="btn btn-sm discord-ad-btn" data-i18n="set.join">Join</span>
+        <span class="discord-row-btn" data-i18n="set.join">Join</span>
       </a>
 
-      <p class="about" id="aboutLine">ShiftPay · 🦝 AkihiroLabs</p>
+      <p class="about"><span id="aboutLine">ShiftPay</span> · <img class="byte-logo byte-xs" src="byte.svg" alt="" width="16" height="16"> AkihiroLabs</p>
     </section>
   </main>
 </div>
@@ -537,11 +594,33 @@
   </div>
 </div>
 
+<!-- About & how to use (help window) -->
+<div class="modal modal-help" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpModalTitle">
+  <div class="modal-head">
+    <h2 id="helpModalTitle" data-i18n="help.title">About &amp; how to use</h2>
+    <button class="icon-btn" id="helpModalClose" aria-label="Close" data-i18n-aria="close"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="help-bar">
+    <div class="segmented segmented-sm help-lang" id="helpLang" role="group" aria-label="Language">
+      <button type="button" data-help-lang="en">English</button>
+      <button type="button" data-help-lang="ja">日本語</button>
+      <button type="button" data-help-lang="my">မြန်မာ</button>
+    </div>
+    <div class="help-tabs" id="helpTabs" role="tablist">
+      <button type="button" role="tab" data-help-tab="about"></button>
+      <button type="button" role="tab" data-help-tab="how"></button>
+      <button type="button" role="tab" data-help-tab="new"></button>
+    </div>
+  </div>
+  <div class="modal-body help-body" id="helpBody"></div>
+  <div class="help-foot" id="helpFoot"></div>
+</div>
+
 <div class="toasts" id="toastContainer" aria-live="polite"></div>
 
 <!-- New version ready (shown by js/pwa.js) -->
 <div class="update-card" id="updateCard" role="alertdialog" aria-labelledby="updateTitle" aria-describedby="updateText" hidden>
-  <div class="update-icon" aria-hidden="true">🎉</div>
+  <img class="update-icon byte-logo" src="byte.svg" alt="" width="40" height="40">
   <div class="update-text">
     <strong id="updateTitle" data-i18n="upd.title">New update released</strong>
     <span id="updateText" data-i18n="upd.text">Please restart ShiftPay to use the new version.</span>
@@ -570,6 +649,7 @@
 <script src="js/push.js"></script>
 <script src="js/cloud.js"></script>
 <script src="js/help.js"></script>
+<script src="js/settings-ui.js"></script>
 <script src="js/pwa.js"></script>
 <script src="js/app.js"></script>
 </body>
